@@ -1,51 +1,25 @@
 ---
+import Layout from "../layouts/Layout.astro";
 import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		---
----
+<Layout>
+  <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 
-<main style="max-width: 720px; margin: 120px auto; padding: 0 20px; font-family: system-ui;">
+  <main style="max-width: 720px; margin: 120px auto; padding: 0 20px;">
+    
+    <p style="opacity: 0.6; letter-spacing: 2px;">
+      WELCOME
+    </p>
 
-  <p style="opacity: 0.6; letter-spacing: 2px;">
-    WELCOME
-  </p>
+    <h1 style="font-size: 42px; margin-top: 20px;">
+      你正在进入一个未命名空间
+    </h1>
 
-  <h1 style="font-size: 42px; margin-top: 20px;">
-    你正在进入一个未命名空间
-  </h1>
+    <p style="margin-top: 20px; line-height: 1.6; opacity: 0.8;">
+      这里是入口页
+    </p>
 
-  <p style="margin-top: 20px; line-height: 1.6; opacity: 0.8;">
-    这里收集物品、记录思考，也出售一些仍在流动中的东西。
-  </p>
-
-  <div style="margin-top: 60px; display: flex; flex-direction: column; gap: 12px;">
-
-    <a href="/blog" style="text-decoration: none; font-size: 18px;">
-      → Enter Blog
-    </a>
-
-    <a href="/market" style="text-decoration: none; font-size: 18px;">
-      → Enter Market
-    </a>
-
-    <a href="/about" style="text-decoration: none; font-size: 18px;">
-      → About This Space
-    </a>
-
-  </div>
-
-</main>
-		<Footer />
-	</body>
-</html>
+  </main>
+</Layout>

@@ -1,0 +1,38 @@
+---
+const nav = [
+  { name: "Home", href: "/" },
+  { name: "Blog", href: "/blog" },
+  { name: "Market", href: "/market" },
+  { name: "About", href: "/about" }
+];
+---
+
+<header class="nav">
+  <div class="logo">BubbleCrisp</div>
+
+  <nav>
+    {nav.map(i => (
+      <a href={i.href}>{i.name}</a>
+    ))}
+  </nav>
+</header>
+
+<style>
+.nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+nav {
+  display: flex;
+  gap: 20px;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+  font-size: 14px;
+}
+</style>

@@ -1,70 +1,57 @@
 ---
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import Layout from "../layouts/Layout.astro";
 
 const items = [
   {
     title: "蓝色工具包",
     desc: "一个用途尚未完全定义的数字工具集合",
-    price: "¥29"
+    price: "¥29",
+    slug: "blue-toolkit"
   },
   {
     title: "记忆碎片合集",
     desc: "一组可下载的视觉与文本素材",
-    price: "¥19"
+    price: "¥19",
+    slug: "memory-fragments"
   },
   {
     title: "实体物件 A",
     desc: "可触摸的未知用途物品（实验性）",
-    price: "¥99"
+    price: "¥99",
+    slug: "object-a"
   }
 ];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>Market</title>
-  </head>
+<Layout>
 
-  <body style="margin:0; font-family: system-ui;">
+  <p style="opacity:0.5; letter-spacing:2px;">MARKET</p>
 
-    <Header />
+  <h1 style="font-size:36px;">Market</h1>
 
-    <main style="max-width: 900px; margin: 100px auto; padding: 0 20px;">
+  <p style="opacity:0.6; margin-top:10px;">
+    一些仍在流动中的物件
+  </p>
 
-      <h1 style="font-size: 36px;">MARKET</h1>
+  <div style="margin-top:60px; display:flex; flex-direction:column; gap:24px;">
 
-      <p style="opacity: 0.6; margin-top: 10px;">
-        一些仍在流动中的物件
-      </p>
+    {items.map(item => (
+      <a
+        href={`/market/${item.slug}`}
+        style="text-decoration:none; color:inherit;"
+      >
+        <div style="border-left:2px solid #eee; padding:14px 18px;">
+          <h3 style="margin:0;">{item.title}</h3>
+          <p style="opacity:0.6; margin:6px 0 0;">
+            {item.desc}
+          </p>
+          <p style="margin:6px 0 0; font-size:14px;">
+            {item.price}
+          </p>
+        </div>
+      </a>
+    ))}
 
-      <div style="margin-top: 60px; display: grid; gap: 20px;">
+  </div>
 
-        {items.map(item => (
-  <a
-    href={`/market/${item.title === "蓝色工具包"
-      ? "blue-toolkit"
-      : item.title === "记忆碎片合集"
-      ? "memory-fragments"
-      : "object-a"
-    }`}
-    style="text-decoration:none; color:inherit;"
-  >
-    <div style="padding: 20px; border: 1px solid #eee;">
-      <h2>{item.title}</h2>
-      <p>{item.desc}</p>
-      <p>{item.price}</p>
-    </div>
-  </a>
-))}
-
-      </div>
-
-    </main>
-
-    <Footer />
-
-  </body>
-</html>
+</Layout>

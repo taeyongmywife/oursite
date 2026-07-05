@@ -1,0 +1,28 @@
+---
+import Nav from "../components/Nav.astro";
+import "../styles/global.css";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bubble Site</title>
+  </head>
+
+  <body>
+    <Nav />
+
+    <main class="container">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+</style>
