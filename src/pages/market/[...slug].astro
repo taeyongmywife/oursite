@@ -1,0 +1,74 @@
+---
+
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import BaseHead from '../../components/BaseHead.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog'); // ⚠️ 临时占位（不影响MARKET运行）
+
+  return [
+    { params: { slug: 'blue-toolkit' } },
+    { params: { slug: 'memory-fragments' } },
+    { params: { slug: 'object-a' } }
+  ];
+}
+
+const { slug } = Astro.params;
+
+// 👉 模拟商品数据（先不用数据库）
+const items = {
+  'blue-toolkit': {
+    title: '蓝色工具包',
+    desc: '一个用途尚未完全定义的数字工具集合',
+    price: '¥29',
+    content: '这是一个实验性工具包，用于测试你的系统边界。'
+  },
+  'memory-fragments': {
+    title: '记忆碎片合集',
+    desc: '一组可下载的视觉与文本素材',
+    price: '¥19',
+    content: '这些碎片记录的是非线性思考的结构。'
+  },
+  'object-a': {
+    title: '实体物件 A',
+    desc: '可触摸的未知用途物品（实验性）',
+    price: '¥99',
+    content: '一个介于设计与现实之间的物体。'
+  }
+};
+
+const item = items[slug];
+---
+
+<html lang="en">
+  
+    <BaseHead title={item.title} description={item.desc} />
+    <body style="margin:0; font-family: system-ui;">
+    <Header />
+
+    <main style="max-width: 720px; margin: 100px auto; padding: 0 20px;">
+
+      <a href="/market" style="opacity:0.6;">← Back to Market</a>
+
+      <h1 style="margin-top: 20px;">{item.title}</h1>
+
+      <p style="opacity:0.6;">{item.desc}</p>
+
+      <div style="margin-top: 10px; font-weight: bold;">
+        {item.price}
+      </div>
+
+      <hr style="margin: 40px 0;" />
+
+      <p style="line-height: 1.6;">
+        {item.content}
+      </p>
+
+    </main>
+
+    <Footer />
+
+  </body>
+</html>
