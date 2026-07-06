@@ -2,6 +2,7 @@
 const nav = [
   { name: "Home", href: "/" },
   { name: "Blog", href: "/blog" },
+  { name: "Projects", href: "/projects" },
   { name: "Market", href: "/market" },
   { name: "About", href: "/about" }
 ];
@@ -21,18 +22,30 @@ const nav = [
 .nav {
   display: flex;
   justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--background-elevated);
 }
 
 nav {
   display: flex;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 a {
   text-decoration: none;
-  color: black;
-  font-size: 14px;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+.logo {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  letter-spacing: 0.05em;
 }
 </style>

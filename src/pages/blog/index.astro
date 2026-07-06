@@ -1,25 +1,30 @@
 ---
 import { getCollection } from 'astro:content';
-import Layout from "../../layouts/Layout.astro";
-const posts = await getCollection('blog');
----
-<Layout>
-      <p style="opacity:0.5; letter-spacing:2px;">FRAGMENTS</p>
-      <h1>Blog</h1>
-      <div style="margin-top:60px; display:flex; flex-direction:column; gap:24px;">
+import Layout from '../../layouts/Layout.astro';
+import BlogCard from '../../components/cards/BlogCard.astro';
 
-        {posts.map(post => (
-          <a
-            href={`/blog/${post.slug}`}
-            style="text-decoration:none; color:inherit;"
-          >
-            <div style="border-left:2px solid #eee; padding:14px 18px;">
-              <h3 style="margin:0;">{post.data.title}</h3>
-              <p style="opacity:0.6; margin:6px 0 0;">
-                {post.data.description}
-              </p>
-            </div>
-          </a>
-        ))}
-      </div>
+const posts = await getCollection('blog');
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+---
+
+<Layout>
+  <p style="opacity: 0.6; letter-spacing: 2px;">FRAGMENTS</p>
+  <h1 style="font-size: 36px; margin-top: 20px;">Blog</h1>
+  <div style="margin-top: 48px; display: flex; flex-direction: column; gap: 16px;">
+    {posts.map(post => (
+      <BlogCard
+        href={`/blog/${post.slug}`}
+        title={post.data.title}
+        description={post.data.description}
+        date={formatDate(post.data.pubDate)}
+        tags={post.data.tags}
+      />
+    ))}
+  </div>
 </Layout>

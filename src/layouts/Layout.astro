@@ -1,13 +1,21 @@
 ---
 import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import BaseHead from '../components/BaseHead.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
 ---
 
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bubble Site</title>
+    <BaseHead title={title} description={description} />
   </head>
 
   <body>
@@ -16,13 +24,7 @@ import "../styles/global.css";
     <main class="container">
       <slot />
     </main>
+
+    <Footer />
   </body>
 </html>
-
-<style>
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 24px;
-}
-</style>

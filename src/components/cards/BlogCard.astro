@@ -1,0 +1,49 @@
+---
+import BaseCard from './BaseCard.astro';
+
+interface Props {
+  href: string;
+  title: string;
+  description?: string;
+  date?: string;
+  tags?: string[];
+}
+
+const { href, title, description, date, tags } = Astro.props;
+---
+
+<BaseCard href={href}>
+  <div class="blog-card">
+    <h3 class="card-title">{title}</h3>
+    
+    {description && (
+      <p class="card-description">{description}</p>
+    )}
+    
+    <div class="blog-card-footer flex items-center justify-between">
+      {date && <p class="card-date">{date}</p>}
+      
+      {tags && tags.length > 0 && (
+        <div class="tags flex gap-2">
+          {tags.map(tag => (
+            <span class="card-tag">{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</BaseCard>
+
+<style>
+.blog-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.blog-card-footer {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+</style>

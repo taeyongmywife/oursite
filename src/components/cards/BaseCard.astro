@@ -1,0 +1,26 @@
+---
+interface Props {
+  href?: string;
+  size?: 'sm' | 'md';
+  hover?: boolean;
+  class?: string;
+}
+
+const { href, size = 'md', hover = true, class: className = '' } = Astro.props;
+const cardClasses = [
+  'card',
+  size === 'sm' ? 'card-sm' : '',
+  !hover ? 'card-no-hover' : '',
+  className
+].filter(Boolean).join(' ');
+---
+
+{href ? (
+  <a href={href} class={cardClasses}>
+    <slot />
+  </a>
+) : (
+  <div class={cardClasses}>
+    <slot />
+  </div>
+)}

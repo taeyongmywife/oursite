@@ -1,25 +1,18 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import BaseHead from '../components/BaseHead.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 ---
 
-<Layout>
-  <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+  <p style="opacity: 0.6; letter-spacing: 2px;">
+    WELCOME
+  </p>
 
-  <main style="max-width: 720px; margin: 120px auto; padding: 0 20px;">
-    
-    <p style="opacity: 0.6; letter-spacing: 2px;">
-      WELCOME
-    </p>
+  <h1 style="font-size: 42px; margin-top: 20px;">
+    你正在进入一个未命名空间
+  </h1>
 
-    <h1 style="font-size: 42px; margin-top: 20px;">
-      你正在进入一个未命名空间
-    </h1>
-
-    <p style="margin-top: 20px; line-height: 1.6; opacity: 0.8;">
-      这里是入口页
-    </p>
-
-  </main>
+  <p style="margin-top: 20px; line-height: 1.6; opacity: 0.8;">
+    这里是入口页
+  </p>
 </Layout>

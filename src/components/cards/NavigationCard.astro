@@ -1,0 +1,44 @@
+---
+import BaseCard from './BaseCard.astro';
+
+interface Props {
+  href: string;
+  title: string;
+  description?: string;
+  icon?: string;
+}
+
+const { href, title, description, icon } = Astro.props;
+---
+
+<BaseCard href={href}>
+  <div class="nav-card">
+    <div class="nav-card-header flex items-center gap-3">
+      {icon && (
+        <span class="nav-icon">{icon}</span>
+      )}
+      <h3 class="card-title">{title}</h3>
+    </div>
+    
+    {description && (
+      <p class="card-description">{description}</p>
+    )}
+  </div>
+</BaseCard>
+
+<style>
+.nav-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nav-card-header {
+  align-items: center;
+}
+
+.nav-icon {
+  font-size: var(--text-lg);
+  opacity: 0.7;
+}
+</style>

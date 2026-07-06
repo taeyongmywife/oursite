@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BlogCard from '../components/cards/BlogCard.astro';
+import ProductCard from '../components/cards/ProductCard.astro';
+import ProjectCard from '../components/cards/ProjectCard.astro';
+import FeatureCard from '../components/cards/FeatureCard.astro';
+import NavigationCard from '../components/cards/NavigationCard.astro';
+---
+
+<Layout title="Card Design System">
+  <p style="opacity: 0.6; letter-spacing: 2px;">DESIGN SYSTEM</p>
+  <h1 style="font-size: 36px; margin-top: 20px;">卡片设计系统</h1>
+  <p style="margin-top: 16px; line-height: 1.6; opacity: 0.8;">
+    一套统一的卡片设计语言，遵循极简克制的 Editorial Design 风格，
+    以留白、边框和字体层级建立视觉秩序。
+  </p>
+
+  <section style="margin-top: 60px;">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">Blog Card · 博客卡片</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <BlogCard 
+        href="/blog/first-post" 
+        title="第一篇文章" 
+        description="这里是一段关于这篇文章的简短描述，帮助读者快速了解内容。"
+        date="2024.01.15"
+        tags={['设计', '思考']}
+      />
+      <BlogCard 
+        href="/blog/second-post" 
+        title="关于时间的记录" 
+        description="关于日常、关于时间、关于一些细碎的观察。"
+        date="2024.01.10"
+      />
+    </div>
+  </section>
+
+  <section style="margin-top: 60px;">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">Product Card · 商品卡片</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <ProductCard 
+        href="/market/blue-toolkit" 
+        title="蓝色工具包" 
+        description="一个用途尚未完全定义的数字工具集合"
+        price="¥29"
+        tags={['数字产品', '实验性']}
+      />
+      <ProductCard 
+        href="/market/memory-fragments" 
+        title="记忆碎片合集" 
+        description="一组可下载的视觉与文本素材"
+        price="¥19"
+      />
+    </div>
+  </section>
+
+  <section style="margin-top: 60px;">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">Project Card · 项目卡片</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <ProjectCard 
+        title="Bubble Site" 
+        description="你正在浏览的这个个人网站，一个极简克制的数字空间。"
+        tags={['Web', 'Astro']}
+        year="2024"
+      />
+      <ProjectCard 
+        href="#" 
+        title="未命名项目" 
+        description="一个正在构思中的创意项目，细节待定。"
+        tags={['实验']}
+      />
+    </div>
+  </section>
+
+  <section style="margin-top: 60px;">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">Feature Card · 功能卡片</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <FeatureCard 
+        icon="✦" 
+        title="克制设计" 
+        description="遵循极简原则，用最少的视觉元素建立清晰的信息层级。"
+      />
+      <FeatureCard 
+        icon="⚪" 
+        title="统一语言" 
+        description="所有组件共享一致的设计令牌，确保视觉语言的统一性。"
+      />
+    </div>
+  </section>
+
+  <section style="margin-top: 60px;">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">Navigation Card · 导航卡片</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <NavigationCard 
+        href="/blog" 
+        icon="✎" 
+        title="Fragments" 
+        description="一些文字记录和思考碎片"
+      />
+      <NavigationCard 
+        href="/market" 
+        icon="◯" 
+        title="Market" 
+        description="一些仍在流动中的物件"
+      />
+    </div>
+  </section>
+
+  <section style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">设计原则</h2>
+    <div style="display: grid; gap: 24px;">
+      <div>
+        <h3 style="font-size: 16px; margin-bottom: 8px;">视觉规范</h3>
+        <ul style="margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; line-height: 1.8;">
+          <li>细边框 + 充足留白建立层次感</li>
+          <li>统一 8-12px 圆角系统</li>
+          <li>禁用阴影作为主要层次区分手段</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size: 16px; margin-bottom: 8px;">交互规范</h3>
+        <ul style="margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; line-height: 1.8;">
+          <li>Hover 仅轻微上移 (-2px)</li>
+          <li>边框与背景色微变反馈</li>
+          <li>200-300ms ease-out 过渡</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size: 16px; margin-bottom: 8px;">可扩展性</h3>
+        <ul style="margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; line-height: 1.8;">
+          <li>所有尺寸、色彩通过 CSS 变量定义</li>
+          <li>BaseCard 作为基础组件可灵活组合</li>
+          <li>易于新增卡片类型或主题切换</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</Layout>

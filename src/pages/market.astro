@@ -1,22 +1,23 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from '../layouts/Layout.astro';
+import ProductCard from '../components/cards/ProductCard.astro';
 
 const items = [
   {
     title: "蓝色工具包",
-    desc: "一个用途尚未完全定义的数字工具集合",
+    description: "一个用途尚未完全定义的数字工具集合",
     price: "¥29",
     slug: "blue-toolkit"
   },
   {
     title: "记忆碎片合集",
-    desc: "一组可下载的视觉与文本素材",
+    description: "一组可下载的视觉与文本素材",
     price: "¥19",
     slug: "memory-fragments"
   },
   {
     title: "实体物件 A",
-    desc: "可触摸的未知用途物品（实验性）",
+    description: "可触摸的未知用途物品（实验性）",
     price: "¥99",
     slug: "object-a"
   }
@@ -24,34 +25,20 @@ const items = [
 ---
 
 <Layout>
-
-  <p style="opacity:0.5; letter-spacing:2px;">MARKET</p>
-
-  <h1 style="font-size:36px;">Market</h1>
-
-  <p style="opacity:0.6; margin-top:10px;">
+  <p style="opacity: 0.6; letter-spacing: 2px;">MARKET</p>
+  <h1 style="font-size: 36px; margin-top: 20px;">Market</h1>
+  <p style="margin-top: 16px; line-height: 1.6; opacity: 0.8;">
     一些仍在流动中的物件
   </p>
 
-  <div style="margin-top:60px; display:flex; flex-direction:column; gap:24px;">
-
+  <div style="margin-top: 48px; display: flex; flex-direction: column; gap: 16px;">
     {items.map(item => (
-      <a
+      <ProductCard
         href={`/market/${item.slug}`}
-        style="text-decoration:none; color:inherit;"
-      >
-        <div style="border-left:2px solid #eee; padding:14px 18px;">
-          <h3 style="margin:0;">{item.title}</h3>
-          <p style="opacity:0.6; margin:6px 0 0;">
-            {item.desc}
-          </p>
-          <p style="margin:6px 0 0; font-size:14px;">
-            {item.price}
-          </p>
-        </div>
-      </a>
+        title={item.title}
+        description={item.description}
+        price={item.price}
+      />
     ))}
-
   </div>
-
 </Layout>

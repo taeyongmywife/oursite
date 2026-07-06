@@ -1,13 +1,7 @@
 ---
-
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import BaseHead from '../../components/BaseHead.astro';
-import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog'); // ⚠️ 临时占位（不影响MARKET运行）
-
   return [
     { params: { slug: 'blue-toolkit' } },
     { params: { slug: 'memory-fragments' } },
@@ -42,33 +36,20 @@ const items = {
 const item = items[slug];
 ---
 
-<html lang="en">
-  
-    <BaseHead title={item.title} description={item.desc} />
-    <body style="margin:0; font-family: system-ui;">
-    <Header />
+<Layout title={item.title} description={item.desc}>
+  <a href="/market" style="opacity: 0.6;">← Back to Market</a>
 
-    <main style="max-width: 720px; margin: 100px auto; padding: 0 20px;">
+  <h1 style="margin-top: 20px;">{item.title}</h1>
 
-      <a href="/market" style="opacity:0.6;">← Back to Market</a>
+  <p style="opacity: 0.6;">{item.desc}</p>
 
-      <h1 style="margin-top: 20px;">{item.title}</h1>
+  <div style="margin-top: 10px; font-weight: bold;">
+    {item.price}
+  </div>
 
-      <p style="opacity:0.6;">{item.desc}</p>
+  <hr style="margin: 40px 0;" />
 
-      <div style="margin-top: 10px; font-weight: bold;">
-        {item.price}
-      </div>
-
-      <hr style="margin: 40px 0;" />
-
-      <p style="line-height: 1.6;">
-        {item.content}
-      </p>
-
-    </main>
-
-    <Footer />
-
-  </body>
-</html>
+  <p style="line-height: 1.6;">
+    {item.content}
+  </p>
+</Layout>

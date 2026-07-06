@@ -1,0 +1,42 @@
+---
+import BaseCard from './BaseCard.astro';
+
+interface Props {
+  href: string;
+  title: string;
+  description?: string;
+  price: string;
+  tags?: string[];
+}
+
+const { href, title, description, price, tags } = Astro.props;
+---
+
+<BaseCard href={href}>
+  <div class="product-card">
+    <div class="flex justify-between items-start">
+      <h3 class="card-title">{title}</h3>
+      <p class="card-price">{price}</p>
+    </div>
+    
+    {description && (
+      <p class="card-description">{description}</p>
+    )}
+    
+    {tags && tags.length > 0 && (
+      <div class="tags flex gap-2">
+        {tags.map(tag => (
+          <span class="card-tag">{tag}</span>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseCard>
+
+<style>
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+</style>

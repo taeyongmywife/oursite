@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProjectCard from '../components/cards/ProjectCard.astro';
+
+const projects = [
+  {
+    title: "Bubble Site",
+    description: "你正在浏览的这个个人网站，一个极简克制的数字空间。",
+    tags: ["Web", "Astro", "Design System"],
+    year: "2024",
+    href: "#"
+  },
+  {
+    title: "未命名项目 A",
+    description: "一个正在构思中的创意项目，关于数字与实体的交界。",
+    tags: ["实验", "创作"],
+    year: "2024"
+  },
+  {
+    title: "记忆归档计划",
+    description: "关于日常记录、时间感知与数据可视化的探索。",
+    tags: ["记录", "数据"],
+    year: "2023",
+    href: "#"
+  },
+  {
+    title: "静默文本",
+    description: "一个关于文字排版与阅读体验的实验性网页。",
+    tags: ["Typography", "Web"],
+    year: "2023"
+  }
+];
+---
+
+<Layout title="Projects">
+  <p style="opacity: 0.6; letter-spacing: 2px;">WORKS</p>
+  <h1 style="font-size: 36px; margin-top: 20px;">Projects</h1>
+  <p style="margin-top: 16px; line-height: 1.6; opacity: 0.8;">
+    一些正在进行或已经完成的项目记录。
+  </p>
+
+  <div style="margin-top: 48px; display: flex; flex-direction: column; gap: 16px;">
+    {projects.map(project => (
+      <ProjectCard 
+        href={project.href}
+        title={project.title}
+        description={project.description}
+        tags={project.tags}
+        year={project.year}
+      />
+    ))}
+  </div>
+</Layout>
