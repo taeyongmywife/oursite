@@ -4,15 +4,58 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
-  <p style="opacity: 0.6; letter-spacing: 2px;">
+  <p class="label-en">
     WELCOME
   </p>
 
-  <h1 style="font-size: 42px; margin-top: 20px;">
-    你正在进入一个未命名空间
-  </h1>
+  <div class="title-section">
+    <h1 class="title-zh">
+      你正在进入一个未命名空间
+    </h1>
+    <p class="subtitle-en">
+      Entering an Unnamed Space
+    </p>
+  </div>
 
-  <p style="margin-top: 20px; line-height: 1.6; opacity: 0.8;">
+  <p class="description">
     这里是入口页
   </p>
 </Layout>
+
+<style>
+.label-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.title-section {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.title-zh {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.subtitle-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--accent);
+  margin: var(--space-1) 0 0 var(--space-2);
+  letter-spacing: 0.05em;
+}
+
+.description {
+  margin-top: var(--space-6);
+  line-height: var(--leading-relaxed);
+  color: var(--muted);
+}
+</style>

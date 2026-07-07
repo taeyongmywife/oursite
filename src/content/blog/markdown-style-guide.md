@@ -1,8 +1,12 @@
 ---
-title: 'Markdown Style Guide'
-description: 'Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.'
+title: '创造实验：从零开始构建产品'
+description: '记录一个产品从想法到实现的完整过程。'
 pubDate: 'Jun 19 2024'
 heroImage: '../../assets/blog-placeholder-1.jpg'
+subject: '创造 / 产品开发'
+status: '进行中'
+readingTime: 15
+featured: false
 ---
 
 Here is a sample of some basic Markdown syntax that can be used when writing Markdown content in Astro.

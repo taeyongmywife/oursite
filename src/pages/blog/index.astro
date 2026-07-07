@@ -1,9 +1,11 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import BlogCard from '../../components/cards/BlogCard.astro';
+import ArchiveCard from '../../components/cards/ArchiveCard.astro';
 
 const posts = await getCollection('blog');
+const featuredPosts = posts.filter(post => post.data.featured);
+const sortedPosts = [...posts].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 function formatDate(date: Date): string {
   const year = date.getFullYear();
@@ -11,20 +13,163 @@ function formatDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}.${month}.${day}`;
 }
+
+function formatId(index: number): string {
+  return `FRAGMENT_${String(index + 1).padStart(3, '0')}`;
+}
 ---
 
-<Layout>
-  <p style="opacity: 0.6; letter-spacing: 2px;">FRAGMENTS</p>
-  <h1 style="font-size: 36px; margin-top: 20px;">Blog</h1>
-  <div style="margin-top: 48px; display: flex; flex-direction: column; gap: 16px;">
-    {posts.map(post => (
-      <BlogCard
-        href={`/blog/${post.slug}`}
-        title={post.data.title}
-        description={post.data.description}
-        date={formatDate(post.data.pubDate)}
-        tags={post.data.tags}
-      />
-    ))}
+<Layout title="FRAGMENTS | 碎片档案">
+  <div class="blog-header">
+    <p class="label-en">FRAGMENTS</p>
+    <div class="title-section">
+      <h1 class="title-zh">碎片档案</h1>
+      <p class="subtitle-en">Creative Research Archive</p>
+    </div>
+    <p class="subtitle">记录关于 AI、创造、商业与意识的探索样本。</p>
+  </div>
+
+  <div class="category-nav">
+    <span class="category-item active">All</span>
+    <span class="category-item">AI实验室</span>
+    <span class="category-item">商业实验</span>
+    <span class="category-item">创造空间</span>
+    <span class="category-item">思考记录</span>
+  </div>
+
+  {featuredPosts.length > 0 && (
+    <div class="featured-section">
+      <p class="section-label">Featured</p>
+      <p class="section-title">精选档案</p>
+      <div class="posts-grid">
+        {featuredPosts.map((post, index) => (
+          <ArchiveCard
+            href={`/blog/${post.slug}`}
+            id={formatId(index)}
+            title={post.data.title}
+            description={post.data.description}
+            date={formatDate(post.data.pubDate)}
+            subject={post.data.subject}
+            status={post.data.status}
+            readingTime={post.data.readingTime}
+          />
+        ))}
+      </div>
+    </div>
+  )}
+
+  <div class="all-section">
+    <p class="section-label">Archive</p>
+    <p class="section-title">档案库</p>
+    <div class="posts-grid">
+      {sortedPosts.map((post, index) => (
+        <ArchiveCard
+          href={`/blog/${post.slug}`}
+          id={formatId(featuredPosts.length + index)}
+          title={post.data.title}
+          description={post.data.description}
+          date={formatDate(post.data.pubDate)}
+          subject={post.data.subject}
+          status={post.data.status}
+          readingTime={post.data.readingTime}
+        />
+      ))}
+    </div>
   </div>
 </Layout>
+
+<style>
+.blog-header {
+  margin-bottom: var(--space-12);
+}
+
+.label-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.title-section {
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.title-zh {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+
+.subtitle-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--accent);
+  margin: var(--space-1) 0 0 var(--space-2);
+  letter-spacing: 0.05em;
+}
+
+.subtitle {
+  font-size: var(--text-lg);
+  color: var(--muted);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.category-nav {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-12);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.category-item {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--muted-soft);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  transition: color var(--duration-base);
+}
+
+.category-item:hover {
+  color: var(--foreground);
+}
+
+.category-item.active {
+  color: var(--foreground);
+  border-bottom: 1px solid var(--foreground);
+}
+
+.featured-section,
+.all-section {
+  margin-bottom: var(--space-16);
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-medium);
+  margin: 0 0 var(--space-6) 0;
+  color: var(--foreground);
+}
+
+.posts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+</style>

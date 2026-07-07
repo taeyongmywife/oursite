@@ -14,6 +14,11 @@ const blog = defineCollection({
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
+			// 新添加的字段
+			subject: z.string(),
+			status: z.string(),
+			readingTime: z.number().optional(),
+			featured: z.boolean().optional().default(false),
 		}),
 });
 

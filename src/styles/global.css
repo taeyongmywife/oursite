@@ -5,24 +5,24 @@
 
 :root {
   /* ============ 色彩系统 ============ */
-  /* 基础色 */
-  --background: #fafafa;
-  --background-elevated: #ffffff;
-  --foreground: #1a1a1a;
-  --muted: #666666;
-  --muted-soft: #999999;
+  /* 基础色 - 反色处理 */
+  --background: #1a1a1a;
+  --background-elevated: #0f0f0f;
+  --foreground: #fafafa;
+  --muted: #a8a8a8;
+  --muted-soft: #737373;
   
   /* 边框系统 */
-  --border: #e5e5e5;
-  --border-strong: #d4d4d4;
-  --border-hover: #b8b8b8;
+  --border: #2a2a2a;
+  --border-strong: #3a3a3a;
+  --border-hover: #4a4a4a;
   
-  /* 强调色（克制使用） */
-  --accent: #404040;
-  --accent-soft: #737373;
+  /* 强调色 - 灰绿色 */
+  --accent: #7fa998;
+  --accent-soft: #5a7a6e;
   
   /* 状态色 */
-  --success: #16a34a;
+  --success: #7fa998;
   --warning: #d97706;
   --error: #dc2626;
 

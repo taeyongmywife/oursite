@@ -6,9 +6,9 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
+    "dev": "set ASTRO_TELEMETRY_DISABLED=1&& astro dev",
+    "build": "set ASTRO_TELEMETRY_DISABLED=1&& astro build",
+    "preview": "set ASTRO_TELEMETRY_DISABLED=1&& astro preview",
     "astro": "astro"
   },
   "dependencies": {
