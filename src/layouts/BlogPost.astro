@@ -1,10 +1,174 @@
 ---
 import Layout from "./Layout.astro";
-const { frontmatter } = Astro.props;
+import { formatBlogDate } from "../lib/blog";
+
+interface Props {
+  title: string;
+  description?: string;
+  archiveId: string;
+  category: string;
+  status: string;
+  pubDate: Date;
+  readingTime?: number;
+  backHref?: string;
+  backLabel?: string;
+}
+
+const {
+  title,
+  description,
+  archiveId,
+  category,
+  status,
+  pubDate,
+  readingTime,
+  backHref = "/blog",
+  backLabel = "BACK TO ARCHIVE",
+} = Astro.props;
+
+const statusTone =
+  status === "持续观察中"
+    ? "accent"
+    : status === "研究中"
+      ? "cool"
+      : status === "进行中"
+        ? "warm"
+        : "muted";
 ---
-<Layout title={frontmatter.title} description={frontmatter.description}>
-  <article>
-    <h1>{frontmatter.title}</h1>
+
+<Layout title={`${title} | FRAGMENTS`} description={description ?? title}>
+  <article class="blog-post">
+    <a href={backHref} class="back-link">&lt; {backLabel}</a>
+
+    <header class="blog-post-header">
+      <div class="blog-post-meta">
+        <div class="meta-row meta-row-primary">
+          <span class="archive-id">{archiveId}</span>
+          <span class="meta-item">SUBJECT: {category}</span>
+        </div>
+
+        <div class="title-row">
+          <h1 class="blog-post-title">{title}</h1>
+          <span class:list={["status-badge", `status-${statusTone}`]}>{status}</span>
+        </div>
+
+        <div class="meta-row meta-row-secondary">
+          <span class="meta-item">DATE: {formatBlogDate(pubDate)}</span>
+          {readingTime && <span class="meta-item">TIME: {readingTime} min</span>}
+        </div>
+      </div>
+    </header>
+
+    <div class="archive-prose">
     <slot />
+    </div>
   </article>
 </Layout>
+
+<style>
+.blog-post {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: var(--space-16) 0;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-10);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.back-link:hover {
+  color: var(--foreground);
+}
+
+.blog-post-header {
+  margin-bottom: var(--space-10);
+}
+
+.blog-post-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+}
+
+.meta-row-primary {
+  color: var(--accent);
+}
+
+.meta-row-secondary {
+  color: var(--muted);
+}
+
+.meta-item,
+.archive-id {
+  text-transform: uppercase;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.blog-post-title {
+  flex: 1;
+  margin: 0;
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: var(--font-semibold);
+  line-height: 1.08;
+  color: var(--foreground);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.status-accent {
+  color: #7fa998;
+}
+
+.status-cool {
+  color: #5a7a9f;
+}
+
+.status-warm {
+  color: #b88f4a;
+}
+
+.status-muted {
+  color: var(--muted-soft);
+}
+
+@media (max-width: 720px) {
+  .blog-post {
+    padding: var(--space-12) 0;
+  }
+
+  .title-row {
+    flex-direction: column;
+  }
+}
+</style>

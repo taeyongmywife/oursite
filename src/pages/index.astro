@@ -1,9 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { getCollection } from 'astro:content';
+
+const fragments = await getCollection('fragments');
+const experiments = await getCollection('experiments');
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+<<<<<<< HEAD
   <p class="label-en">
     WELCOME
   </p>
@@ -58,4 +63,209 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
   line-height: var(--leading-relaxed);
   color: var(--muted);
 }
+=======
+  <section class="hero">
+    <div class="hero-label">PERSONAL RESEARCH ARCHIVE</div>
+    <h1 class="hero-title">BubbleCrisp</h1>
+    <p class="hero-description">
+      A personal archive<br />
+      of thoughts,<br />
+      experiments and observations.
+    </p>
+    <a href="/fragments" class="hero-button">[ ENTER ARCHIVE ]</a>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">LATEST FRAGMENTS</h2>
+      <span class="section-subtitle">最近碎片</span>
+    </div>
+    <div class="fragments-grid">
+      {fragments.slice(0, 3).map((fragment, i) => (
+        <a href={`/fragments/${fragment.id.replace(/\.(md|mdx)$/, '')}`} class="fragment-card">
+          <div class="fragment-id">FRAGMENT_{String(i + 1).padStart(3, '0')}</div>
+          <h3 class="fragment-title">{fragment.data.title}</h3>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">ACTIVE EXPERIMENTS</h2>
+      <span class="section-subtitle">正在进行</span>
+    </div>
+    <div class="labs-grid">
+      <div class="lab-card">
+        <div class="lab-name">AI LAB</div>
+        <p class="lab-desc">Building my personal AI system.</p>
+      </div>
+      <div class="lab-card">
+        <div class="lab-name">COMMERCE LAB</div>
+        <p class="lab-desc">Building an ecommerce system.</p>
+      </div>
+      <div class="lab-card">
+        <div class="lab-name">CREATIVE LAB</div>
+        <p class="lab-desc">Exploring design and creation.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">THE OBSERVER</h2>
+      <span class="section-subtitle">关于创造者</span>
+    </div>
+    <a href="/identity" class="identity-link">[ VIEW IDENTITY ]</a>
+  </section>
+</Layout>
+
+<style>
+.hero {
+  padding: var(--space-20) 0;
+  text-align: center;
+}
+
+.hero-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-6);
+}
+
+.hero-title {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-semibold);
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: 0.1em;
+}
+
+.hero-description {
+  font-size: var(--text-xl);
+  line-height: var(--leading-relaxed);
+  color: var(--muted);
+  margin: 0 0 var(--space-8) 0;
+}
+
+.hero-button {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  padding: var(--space-3) var(--space-6);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.hero-button:hover {
+  border-color: var(--border-hover);
+  background-color: var(--background-elevated);
+}
+
+.section {
+  padding: var(--space-16) 0;
+  border-top: 1px solid var(--border);
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-8);
+}
+
+.section-title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.fragments-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.fragment-card {
+  display: block;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.fragment-card:hover {
+  opacity: 0.7;
+}
+
+.fragment-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-bottom: var(--space-2);
+}
+
+.fragment-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-normal);
+  margin: 0;
+  color: var(--foreground);
+}
+
+.labs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+.lab-card {
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  background-color: var(--background-elevated);
+}
+
+.lab-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+  color: var(--accent);
+}
+
+.lab-desc {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+.identity-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.identity-link:hover {
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .labs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+>>>>>>> e119a38 (update)
 </style>

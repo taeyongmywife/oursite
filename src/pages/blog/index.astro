@@ -2,21 +2,19 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import ArchiveCard from '../../components/cards/ArchiveCard.astro';
+import {
+  BLOG_CATEGORIES,
+  createBlogIdMap,
+  formatBlogDate,
+  getBlogCategoryLabel,
+  getBlogPostPath,
+  sortBlogPosts,
+} from '../../lib/blog';
 
 const posts = await getCollection('blog');
-const featuredPosts = posts.filter(post => post.data.featured);
-const sortedPosts = [...posts].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
-
-function formatId(index: number): string {
-  return `FRAGMENT_${String(index + 1).padStart(3, '0')}`;
-}
+const featuredPosts = posts.filter((post) => post.data.featured);
+const sortedPosts = sortBlogPosts(posts);
+const postIdMap = createBlogIdMap(posts);
 ---
 
 <Layout title="FRAGMENTS | 碎片档案">
@@ -29,54 +27,154 @@ function formatId(index: number): string {
     <p class="subtitle">记录关于 AI、创造、商业与意识的探索样本。</p>
   </div>
 
-  <div class="category-nav">
-    <span class="category-item active">All</span>
-    <span class="category-item">AI实验室</span>
-    <span class="category-item">商业实验</span>
-    <span class="category-item">创造空间</span>
-    <span class="category-item">思考记录</span>
+  <div class="category-nav" data-category-nav>
+    {BLOG_CATEGORIES.map((category) => (
+      <a
+        href={category.slug === 'all' ? '/blog' : `/blog?category=${category.slug}`}
+        class:list={['category-item', category.slug === 'all' && 'active']}
+        data-category-trigger={category.slug}
+      >
+        {category.label}
+      </a>
+    ))}
   </div>
 
-  {featuredPosts.length > 0 && (
-    <div class="featured-section">
+  <div class="posts-region" data-posts-region>
+    {featuredPosts.length > 0 && (
+    <div class="featured-section" data-post-section="featured">
       <p class="section-label">Featured</p>
       <p class="section-title">精选档案</p>
       <div class="posts-grid">
-        {featuredPosts.map((post, index) => (
+        {featuredPosts.map((post) => (
           <ArchiveCard
-            href={`/blog/${post.slug}`}
-            id={formatId(index)}
+            href={`/blog/${getBlogPostPath(post)}`}
+            id={postIdMap.get(getBlogPostPath(post)) ?? 'FRAGMENT_000'}
             title={post.data.title}
             description={post.data.description}
-            date={formatDate(post.data.pubDate)}
-            subject={post.data.subject}
+            date={formatBlogDate(post.data.pubDate)}
+            category={getBlogCategoryLabel(post.data.category)}
             status={post.data.status}
             readingTime={post.data.readingTime}
+            data-category={post.data.category}
+            data-post-card
           />
         ))}
       </div>
     </div>
   )}
 
-  <div class="all-section">
+    <div class="all-section" data-post-section="archive">
     <p class="section-label">Archive</p>
     <p class="section-title">档案库</p>
     <div class="posts-grid">
-      {sortedPosts.map((post, index) => (
+      {sortedPosts.map((post) => (
         <ArchiveCard
-          href={`/blog/${post.slug}`}
-          id={formatId(featuredPosts.length + index)}
+          href={`/blog/${getBlogPostPath(post)}`}
+          id={postIdMap.get(getBlogPostPath(post)) ?? 'FRAGMENT_000'}
           title={post.data.title}
           description={post.data.description}
-          date={formatDate(post.data.pubDate)}
-          subject={post.data.subject}
+          date={formatBlogDate(post.data.pubDate)}
+          category={getBlogCategoryLabel(post.data.category)}
           status={post.data.status}
           readingTime={post.data.readingTime}
+          data-category={post.data.category}
+          data-post-card
         />
       ))}
+      </div>
     </div>
   </div>
+
+  <p class="empty-state" data-empty-state hidden>该分类下暂时还没有可阅读的档案。</p>
 </Layout>
+
+<script is:inline define:vars={{ validCategories: BLOG_CATEGORIES.map((item) => item.slug) }}>
+  const categoryNav = document.querySelector('[data-category-nav]');
+  const postsRegion = document.querySelector('[data-posts-region]');
+  const emptyState = document.querySelector('[data-empty-state]');
+
+  if (categoryNav && postsRegion && emptyState) {
+    const triggers = Array.from(categoryNav.querySelectorAll('[data-category-trigger]'));
+    const cards = Array.from(document.querySelectorAll('[data-post-card]'));
+    const sections = Array.from(document.querySelectorAll('[data-post-section]'));
+    const validCategorySet = new Set(validCategories);
+
+    const getCategoryFromUrl = () => {
+      const currentUrl = new URL(window.location.href);
+      const category = currentUrl.searchParams.get('category') ?? 'all';
+      return validCategorySet.has(category) ? category : 'all';
+    };
+
+    const syncUrl = (category, replace = false) => {
+      const currentUrl = new URL(window.location.href);
+      if (category === 'all') {
+        currentUrl.searchParams.delete('category');
+      } else {
+        currentUrl.searchParams.set('category', category);
+      }
+
+      const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+      if (replace) {
+        window.history.replaceState({}, '', nextUrl);
+      } else {
+        window.history.pushState({}, '', nextUrl);
+      }
+    };
+
+    const updateActiveState = (category) => {
+      triggers.forEach((trigger) => {
+        const isActive = trigger.getAttribute('data-category-trigger') === category;
+        trigger.classList.toggle('active', isActive);
+        trigger.setAttribute('aria-current', isActive ? 'page' : 'false');
+      });
+    };
+
+    const applyFilter = (category) => {
+      cards.forEach((card) => {
+        const matches = category === 'all' || card.getAttribute('data-category') === category;
+        card.hidden = !matches;
+      });
+
+      sections.forEach((section) => {
+        const visibleCards = section.querySelectorAll('[data-post-card]:not([hidden])');
+        section.hidden = visibleCards.length === 0;
+      });
+
+      const hasVisibleCards = cards.some((card) => !card.hidden);
+      emptyState.hidden = hasVisibleCards;
+      updateActiveState(category);
+    };
+
+    const transitionTo = (category) => {
+      postsRegion.classList.add('is-transitioning');
+      window.setTimeout(() => {
+        applyFilter(category);
+        postsRegion.classList.remove('is-transitioning');
+      }, 170);
+    };
+
+    triggers.forEach((trigger) => {
+      trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        const nextCategory = trigger.getAttribute('data-category-trigger') ?? 'all';
+        if (nextCategory === getCategoryFromUrl()) {
+          return;
+        }
+
+        syncUrl(nextCategory);
+        transitionTo(nextCategory);
+      });
+    });
+
+    window.addEventListener('popstate', () => {
+      applyFilter(getCategoryFromUrl());
+    });
+
+    const initialCategory = getCategoryFromUrl();
+    applyFilter(initialCategory);
+    syncUrl(initialCategory, true);
+  }
+</script>
 
 <style>
 .blog-header {
@@ -122,6 +220,7 @@ function formatId(index: number): string {
 
 .category-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-4);
   margin-bottom: var(--space-12);
   padding-bottom: var(--space-6);
@@ -134,7 +233,10 @@ function formatId(index: number): string {
   color: var(--muted-soft);
   cursor: pointer;
   padding: var(--space-2) 0;
-  transition: color var(--duration-base);
+  transition:
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+  border-bottom: 1px solid transparent;
 }
 
 .category-item:hover {
@@ -144,6 +246,15 @@ function formatId(index: number): string {
 .category-item.active {
   color: var(--foreground);
   border-bottom: 1px solid var(--foreground);
+}
+
+.posts-region {
+  opacity: 1;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.posts-region.is-transitioning {
+  opacity: 0.32;
 }
 
 .featured-section,
@@ -171,5 +282,12 @@ function formatId(index: number): string {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+.empty-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: 0;
 }
 </style>

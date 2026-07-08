@@ -1,0 +1,195 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection, render } from 'astro:content';
+import { getEntryPath } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const experiments = await getCollection('experiments');
+  return experiments.map((exp) => ({
+    params: { slug: getEntryPath(exp) },
+  }));
+}
+
+const experiments = await getCollection('experiments');
+const slug = Astro.params.slug;
+const experiment = experiments.find((entry) => getEntryPath(entry) === slug);
+
+if (!experiment) {
+  throw new Error(`Experiment not found for slug: ${slug}`);
+}
+
+const { Content } = await render(experiment);
+---
+
+<Layout title={`${experiment.data.title} | EXPERIMENTS`} description={experiment.data.title}>
+  <article class="experiment-detail">
+    <div class="experiment-header">
+      <span class="experiment-id">EXPERIMENT_001</span>
+      <span class="experiment-status">{experiment.data.status}</span>
+    </div>
+    
+    <h1 class="experiment-title">{experiment.data.title}</h1>
+    
+    <div class="experiment-meta">
+      <div class="meta-item">
+        <span class="meta-label">LAB:</span>
+        <span class="meta-value">{experiment.data.lab}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">DATE:</span>
+        <span class="meta-value">{experiment.data.pubDate.toISOString().split('T')[0]}</span>
+      </div>
+    </div>
+
+    <div class="meta-section">
+      <h2 class="meta-section-title">OBJECTIVE</h2>
+      <p class="meta-section-content">{experiment.data.objective}</p>
+    </div>
+
+    <div class="meta-section">
+      <h2 class="meta-section-title">TOOLS</h2>
+      <div class="tools-list">
+        {experiment.data.tools.map(tool => (
+          <span class="tool-tag">{tool}</span>
+        ))}
+      </div>
+    </div>
+
+    <div class="experiment-content">
+      <Content />
+    </div>
+
+    <a href="/experiments" class="back-link">[ BACK TO EXPERIMENTS ]</a>
+  </article>
+</Layout>
+
+<style>
+.experiment-detail {
+  padding: var(--space-16) 0;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.experiment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.experiment-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.experiment-status {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft);
+  padding: var(--space-1) var(--space-3);
+}
+
+.experiment-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-normal);
+  margin: 0 0 var(--space-8) 0;
+  line-height: var(--leading-tight);
+}
+
+.experiment-meta {
+  display: flex;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.meta-item {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.meta-label {
+  color: var(--muted);
+}
+
+.meta-value {
+  color: var(--foreground);
+}
+
+.meta-section {
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  background-color: var(--background-elevated);
+}
+
+.meta-section-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.meta-section-content {
+  font-size: var(--text-base);
+  color: var(--foreground);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+.tools-list {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tool-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--background);
+}
+
+.experiment-content {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--foreground);
+}
+
+.experiment-content :global(p) {
+  margin: 0 0 var(--space-4) 0;
+}
+
+.experiment-content :global(h2) {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  margin: var(--space-8) 0 var(--space-4) 0;
+}
+
+.experiment-content :global(ul) {
+  margin: 0 0 var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: var(--space-12);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.back-link:hover {
+  opacity: 0.7;
+}
+</style>

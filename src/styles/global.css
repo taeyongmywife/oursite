@@ -66,6 +66,7 @@
   --leading-snug: 1.35;
   --leading-normal: 1.5;
   --leading-relaxed: 1.6;
+  --leading-loose: 1.8;
   
   /* 字重 */
   --font-normal: 400;
@@ -202,6 +203,139 @@ a {
   margin: 0;
   color: var(--muted-soft);
   letter-spacing: 0.025em;
+}
+
+/* ========================================
+   长文排版系统
+   ======================================== */
+
+.archive-prose {
+  color: #e4e4e7;
+  font-size: var(--text-base);
+  line-height: var(--leading-loose);
+}
+
+.archive-prose > :first-child {
+  margin-top: 0;
+}
+
+.archive-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.archive-prose :where(p, ul, ol, blockquote, pre, hr, table, figure) {
+  margin: 0 0 var(--space-6) 0;
+}
+
+.archive-prose :where(h2, h3, h4) {
+  margin: var(--space-10) 0 var(--space-4) 0;
+  color: var(--foreground);
+  line-height: var(--leading-tight);
+}
+
+.archive-prose :where(h2) {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+}
+
+.archive-prose :where(h3) {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
+.archive-prose :where(h4) {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+}
+
+.archive-prose :where(ul, ol) {
+  padding-left: var(--space-6);
+}
+
+.archive-prose :where(li + li) {
+  margin-top: var(--space-2);
+}
+
+.archive-prose :where(a) {
+  color: var(--foreground);
+  text-decoration-color: var(--muted);
+  text-underline-offset: 0.2em;
+}
+
+.archive-prose :where(a:hover) {
+  text-decoration-color: var(--foreground);
+}
+
+.archive-prose :where(strong) {
+  color: var(--foreground);
+}
+
+.archive-prose :where(blockquote) {
+  padding: var(--space-4) var(--space-5);
+  border-left: 2px solid var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.archive-prose :where(blockquote p:last-child) {
+  margin-bottom: 0;
+}
+
+.archive-prose :where(code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 0.15em 0.35em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.archive-prose :where(pre) {
+  overflow-x: auto;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--background-elevated);
+}
+
+.archive-prose :where(pre code) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.archive-prose :where(hr) {
+  border: 0;
+  border-top: 1px solid #27272a;
+}
+
+.archive-prose :where(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.archive-prose :where(table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.archive-prose :where(th, td) {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.archive-prose :where(kbd) {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.12em 0.4em;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--background-elevated);
 }
 
 /* ========================================

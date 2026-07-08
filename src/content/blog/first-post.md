@@ -3,6 +3,7 @@ title: '为什么我记不住细节？'
 description: '关于人类认知与记忆系统的初步观察记录。'
 pubDate: 'Jul 08 2022'
 heroImage: '../../assets/blog-placeholder-3.jpg'
+category: 'thinking-notes'
 subject: '认知 / 记忆系统'
 status: '持续观察中'
 readingTime: 8

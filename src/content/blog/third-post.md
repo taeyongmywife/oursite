@@ -3,6 +3,7 @@ title: '数字时代的注意力分配策略'
 description: '在信息过载中寻找平衡与专注的方法论。'
 pubDate: 'Jul 22 2022'
 heroImage: '../../assets/blog-placeholder-2.jpg'
+category: 'thinking-notes'
 subject: '思考 / 注意力管理'
 status: '已归档'
 readingTime: 10

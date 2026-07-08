@@ -1,0 +1,131 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from 'astro:content';
+import { getEntryPath } from '../../lib/content';
+
+const cases = await getCollection('cases');
+---
+
+<Layout title="MARKET | BubbleCrisp" description="Market Lab - A record of business experiments.">
+  <div class="market-page">
+    <div class="page-header">
+      <h1 class="page-title">MARKET</h1>
+      <span class="page-subtitle">商业实验</span>
+    </div>
+
+    <div class="cases-list">
+      {cases.map((c, i) => (
+        <a href={`/market/${getEntryPath(c)}`} class="case-card">
+          <div class="case-meta">
+            <span class="case-id">CASE_{String(i + 1).padStart(3, '0')}</span>
+            <span class="case-status">{c.data.status}</span>
+          </div>
+          <h2 class="case-title">{c.data.title}</h2>
+          <p class="case-observation">{c.data.observation}</p>
+          <div class="case-date">
+            <span>DATE: {c.data.pubDate.toISOString().split('T')[0]}</span>
+          </div>
+        </a>
+      ))}
+      {cases.length === 0 && (
+        <div class="empty-state">
+          <p>No market experiments yet.</p>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+.market-page {
+  padding: var(--space-12) 0;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: var(--space-16);
+}
+
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.page-subtitle {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  display: block;
+}
+
+.cases-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.case-card {
+  display: block;
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.case-card:hover {
+  opacity: 0.7;
+}
+
+.case-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.case-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.case-status {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft);
+  padding: var(--space-1) var(--space-3);
+}
+
+.case-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-normal);
+  margin: 0 0 var(--space-3) 0;
+  color: var(--foreground);
+}
+
+.case-observation {
+  font-size: var(--text-base);
+  color: var(--muted);
+  margin: 0 0 var(--space-4) 0;
+  line-height: var(--leading-relaxed);
+  font-style: italic;
+}
+
+.case-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.empty-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  padding: var(--space-12) 0;
+  text-align: center;
+}
+</style>

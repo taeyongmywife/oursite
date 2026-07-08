@@ -1,0 +1,205 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="IDENTITY | BubbleCrisp" description="About the creator behind BubbleCrisp.">
+  <div class="identity-page">
+    <div class="page-header">
+      <h1 class="page-title">IDENTITY</h1>
+      <span class="page-subtitle">个人档案</span>
+    </div>
+
+    <section class="identity-section">
+      <h2 class="section-title">ABOUT</h2>
+      <p class="section-content">
+        我是谁
+      </p>
+      <p class="section-content">
+        A person exploring the world through observations, experiments, and creations.
+        Building systems to understand and navigate reality.
+      </p>
+    </section>
+
+    <section class="identity-section">
+      <h2 class="section-title">TIMELINE</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date">2024</div>
+          <div class="timeline-content">Started this archive</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="identity-section">
+      <h2 class="section-title">NOW</h2>
+      <p class="section-content">
+        当前正在研究什么
+      </p>
+      <ul class="now-list">
+        <li>AI workflows and automation</li>
+        <li>Personal knowledge systems</li>
+        <li>Digital products and ecommerce</li>
+      </ul>
+    </section>
+
+    <section class="identity-section">
+      <h2 class="section-title">TOOLS</h2>
+      <div class="tools-grid">
+        <span class="tool-item">Astro</span>
+        <span class="tool-item">React</span>
+        <span class="tool-item">TypeScript</span>
+        <span class="tool-item">Node.js</span>
+        <span class="tool-item">Python</span>
+        <span class="tool-item">LLMs / AI</span>
+      </div>
+    </section>
+
+    <section class="identity-section">
+      <h2 class="section-title">BELIEFS</h2>
+      <ul class="beliefs-list">
+        <li>Systems thinking over isolated facts</li>
+        <li>Iteration and experimentation over perfection</li>
+        <li>Creating over consuming</li>
+        <li>Long-term thinking over short-term gains</li>
+      </ul>
+    </section>
+
+    <a href="/" class="back-link">[ BACK TO ARCHIVE ]</a>
+  </div>
+</Layout>
+
+<style>
+.identity-page {
+  padding: var(--space-12) 0;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: var(--space-16);
+}
+
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.page-subtitle {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  display: block;
+}
+
+.identity-section {
+  margin-bottom: var(--space-12);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border);
+}
+
+.identity-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.section-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.section-content {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--foreground);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: var(--space-4);
+}
+
+.timeline-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+.timeline-content {
+  font-size: var(--text-base);
+  color: var(--foreground);
+  line-height: var(--leading-relaxed);
+}
+
+.now-list,
+.beliefs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.now-list li,
+.beliefs-list li {
+  font-size: var(--text-base);
+  color: var(--foreground);
+  line-height: var(--leading-relaxed);
+  padding-left: var(--space-4);
+  position: relative;
+}
+
+.now-list li::before,
+.beliefs-list li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.tools-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tool-item {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--background-elevated);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: var(--space-12);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.back-link:hover {
+  opacity: 0.7;
+}
+</style>

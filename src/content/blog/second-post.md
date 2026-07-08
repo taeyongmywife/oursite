@@ -3,6 +3,7 @@ title: 'AI作为协作伙伴的可能性'
 description: '探索如何与人工智能建立更有效的协作关系。'
 pubDate: 'Jul 15 2022'
 heroImage: '../../assets/blog-placeholder-4.jpg'
+category: 'ai-lab'
 subject: 'AI / 协作系统'
 status: '研究中'
 readingTime: 12

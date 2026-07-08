@@ -1,0 +1,35 @@
+---
+import { getCollection, render } from 'astro:content';
+import BlogPost from '../../layouts/BlogPost.astro';
+import { createBlogIdMap, getBlogCategoryLabel, getBlogPostPath } from '../../lib/blog';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: getBlogPostPath(post) },
+  }));
+}
+
+const posts = await getCollection('blog');
+const slug = Astro.params.slug;
+const post = posts.find((entry) => getBlogPostPath(entry) === slug);
+
+if (!post) {
+  throw new Error(`Blog post not found for slug: ${slug}`);
+}
+
+const archiveId = createBlogIdMap(posts).get(getBlogPostPath(post)) ?? 'FRAGMENT_000';
+const { Content } = await render(post);
+---
+
+<BlogPost
+  title={post.data.title}
+  description={post.data.description}
+  archiveId={archiveId}
+  category={getBlogCategoryLabel(post.data.category)}
+  status={post.data.status}
+  pubDate={post.data.pubDate}
+  readingTime={post.data.readingTime}
+>
+  <Content />
+</BlogPost>

@@ -1,0 +1,170 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from 'astro:content';
+import { getEntryPath } from '../../lib/content';
+
+const experiments = await getCollection('experiments');
+
+const labs = [
+  { id: 'AI LAB', name: 'AI LAB', desc: 'Building my personal AI system.' },
+  { id: 'COMMERCE LAB', name: 'COMMERCE LAB', desc: 'Building an ecommerce system.' },
+  { id: 'CREATIVE LAB', name: 'CREATIVE LAB', desc: 'Exploring design and creation.' }
+];
+---
+
+<Layout title="EXPERIMENTS | BubbleCrisp" description="Experiment Lab - A record of ongoing projects.">
+  <div class="experiments-page">
+    <div class="page-header">
+      <h1 class="page-title">EXPERIMENTS</h1>
+      <span class="page-subtitle">实验记录</span>
+    </div>
+
+    <div class="labs-grid">
+      {labs.map((lab) => {
+        const labExperiments = experiments.filter(e => e.data.lab === lab.id);
+        return (
+          <div class="lab-section">
+            <div class="lab-header">
+              <h2 class="lab-name">{lab.name}</h2>
+              <p class="lab-desc">{lab.desc}</p>
+            </div>
+            <div class="experiments-list">
+              {labExperiments.map((exp, i) => (
+                <a href={`/experiments/${getEntryPath(exp)}`} class="experiment-card">
+                  <div class="experiment-meta">
+                    <span class="experiment-id">EXPERIMENT_{String(i + 1).padStart(3, '0')}</span>
+                    <span class="experiment-status">{exp.data.status}</span>
+                  </div>
+                  <h3 class="experiment-title">{exp.data.title}</h3>
+                  <p class="experiment-objective">{exp.data.objective}</p>
+                </a>
+              ))}
+              {labExperiments.length === 0 && (
+                <div class="empty-state">No experiments yet.</div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</Layout>
+
+<style>
+.experiments-page {
+  padding: var(--space-12) 0;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: var(--space-16);
+}
+
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2) 0;
+}
+
+.page-subtitle {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  display: block;
+}
+
+.labs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.lab-section {
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--border);
+}
+
+.lab-header {
+  margin-bottom: var(--space-8);
+}
+
+.lab-name {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2) 0;
+  color: var(--accent);
+}
+
+.lab-desc {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: 0;
+}
+
+.experiments-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.experiment-card {
+  display: block;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  background-color: var(--background-elevated);
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.experiment-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.experiment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.experiment-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.experiment-status {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft);
+  padding: var(--space-1) var(--space-3);
+}
+
+.experiment-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  margin: 0 0 var(--space-2) 0;
+  color: var(--foreground);
+}
+
+.experiment-objective {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+.empty-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  padding: var(--space-6);
+  border: 1px dashed var(--border);
+  text-align: center;
+}
+</style>

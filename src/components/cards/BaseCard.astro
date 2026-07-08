@@ -4,9 +4,10 @@ interface Props {
   size?: 'sm' | 'md';
   hover?: boolean;
   class?: string;
+  [key: string]: unknown;
 }
 
-const { href, size = 'md', hover = true, class: className = '' } = Astro.props;
+const { href, size = 'md', hover = true, class: className = '', ...rest } = Astro.props;
 const cardClasses = [
   'card',
   size === 'sm' ? 'card-sm' : '',
@@ -16,11 +17,11 @@ const cardClasses = [
 ---
 
 {href ? (
-  <a href={href} class={cardClasses}>
+  <a href={href} class={cardClasses} {...rest}>
     <slot />
   </a>
 ) : (
-  <div class={cardClasses}>
+  <div class={cardClasses} {...rest}>
     <slot />
   </div>
 )}

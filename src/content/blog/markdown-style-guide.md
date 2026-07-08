@@ -3,6 +3,7 @@ title: '创造实验：从零开始构建产品'
 description: '记录一个产品从想法到实现的完整过程。'
 pubDate: 'Jun 19 2024'
 heroImage: '../../assets/blog-placeholder-1.jpg'
+category: 'creative-space'
 subject: '创造 / 产品开发'
 status: '进行中'
 readingTime: 15
