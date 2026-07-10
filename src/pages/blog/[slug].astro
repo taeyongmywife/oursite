@@ -1,6 +1,9 @@
 ---
 import { getCollection, render } from 'astro:content';
-import BlogPost from '../../layouts/BlogPost.astro';
+import Layout from "../../layouts/Layout.astro";
+import ChoicePanel from "../../components/ChoicePanel.astro";
+import MineralFigure from "../../components/MineralFigure.astro";
+import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import { createBlogIdMap, getBlogCategoryLabel, getBlogPostPath } from '../../lib/blog';
 
 export async function getStaticPaths() {
@@ -19,17 +22,94 @@ if (!post) {
 }
 
 const archiveId = createBlogIdMap(posts).get(getBlogPostPath(post)) ?? 'FRAGMENT_000';
+const specimenId = (archiveId.match(/\d+/)?.[0] ?? "0").padStart(4, "0");
 const { Content } = await render(post);
+const collected = post.data.pubDate.toISOString().split("T")[0];
+const status =
+  post.data.status?.includes("归档") || post.data.status?.toLowerCase?.().includes("archiv")
+    ? "archived"
+    : "crystallizing";
 ---
 
-<BlogPost
-  title={post.data.title}
-  description={post.data.description}
-  archiveId={archiveId}
-  category={getBlogCategoryLabel(post.data.category)}
-  status={post.data.status}
-  pubDate={post.data.pubDate}
-  readingTime={post.data.readingTime}
->
-  <Content />
-</BlogPost>
+<Layout title={`${post.data.title} | BLOG`} description={post.data.description ?? post.data.title}>
+  <article class="post">
+    <SpecimenLabel
+      id={specimenId}
+      titleCn={post.data.title}
+      titleEn={getBlogCategoryLabel(post.data.category)}
+      collected={collected}
+      location="digital sediment"
+      composition={post.data.subject ?? post.data.category}
+      status={status}
+      variant="full"
+    />
+
+    {post.data.heroImage && (
+      <div class="hero-figure">
+        <MineralFigure src={post.data.heroImage} alt={post.data.title} caption="Specimen figure" />
+      </div>
+    )}
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <ChoicePanel
+      prompt="Close this file."
+      options={[
+        { label: "Back to blog", href: "/blog" },
+        { label: "Enter fragments", href: "/fragments" },
+      ]}
+    />
+  </article>
+</Layout>
+
+<style>
+.post {
+  padding: var(--space-16) 0;
+  max-width: 68ch;
+  margin: 0 auto;
+}
+
+.hero-figure {
+  margin-top: var(--space-8);
+}
+
+.prose {
+  margin-top: var(--space-12);
+  color: var(--paper-bone);
+  line-height: 1.75;
+}
+
+.prose :global(p) {
+  margin: 0 0 var(--space-6) 0;
+}
+
+.prose :global(h2) {
+  margin: var(--space-12) 0 var(--space-4) 0;
+  font-size: var(--text-2xl);
+  font-weight: 400;
+}
+
+.prose :global(h3) {
+  margin: var(--space-8) 0 var(--space-3) 0;
+  font-size: var(--text-xl);
+  font-weight: 400;
+}
+
+.prose :global(a) {
+  color: var(--mineral-copper);
+}
+
+.prose :global(pre) {
+  border: var(--border-thin);
+  background: var(--bg-shelf);
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+
+.prose :global(code) {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+</style>

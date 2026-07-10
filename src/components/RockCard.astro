@@ -1,0 +1,117 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Props {
+  id: string;
+  titleCn: string;
+  titleEn: string;
+  date: string;
+  href: string;
+  figure?: ImageMetadata;
+  figureAlt?: string;
+  variant?: "line" | "card";
+  [key: string]: unknown;
+}
+
+const {
+  id,
+  titleCn,
+  titleEn,
+  date,
+  href,
+  figure,
+  figureAlt,
+  variant = "line",
+  ...rest
+} = Astro.props;
+const normalizedId = id.padStart(4, "0");
+const gridCols = figure ? "200px 1fr" : "1fr";
+---
+
+<a
+  href={href}
+  class:list={["rock-card", `variant-${variant}`]}
+  style={`--rock-card-cols:${gridCols}`}
+  {...rest}
+>
+  {figure && (
+    <figure class="rock-card-figure">
+      <Image
+        src={figure}
+        alt={figureAlt ?? "Mineral specimen figure"}
+        width={200}
+        height={250}
+      />
+    </figure>
+  )}
+  <div class="rock-card-body">
+    <div class="rock-card-id">#{normalizedId}</div>
+    <div class="rock-card-title-cn">{titleCn}</div>
+    <div class="rock-card-title-en">{titleEn}</div>
+    <div class="rock-card-meta">{date}</div>
+  </div>
+</a>
+
+<style>
+.rock-card {
+  display: grid;
+  grid-template-columns: var(--rock-card-cols, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: var(--border-thin);
+  text-decoration: none;
+  color: var(--paper-bone);
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.rock-card.variant-card {
+  padding: var(--space-6);
+  border: var(--border-solid);
+  background: rgba(10, 10, 12, 0.72);
+  margin-bottom: var(--space-4);
+}
+
+.rock-card:hover {
+  opacity: 0.85;
+}
+
+.rock-card-figure {
+  margin: 0;
+}
+
+.rock-card-figure :global(img) {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: brightness(0.7);
+}
+
+.rock-card-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mineral-copper);
+  letter-spacing: 0.05em;
+}
+
+.rock-card-title-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  margin-top: 4px;
+}
+
+.rock-card-title-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--paper-rust);
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+
+.rock-card-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  margin-top: var(--space-2);
+}
+</style>

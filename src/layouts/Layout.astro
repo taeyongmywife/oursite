@@ -1,30 +1,14 @@
 ---
-import Nav from "../components/Nav.astro";
-import Footer from "../components/Footer.astro";
-import BaseHead from '../components/BaseHead.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
-import "../styles/global.css";
+import BaseLayout from "./BaseLayout.astro";
 
 interface Props {
   title?: string;
   description?: string;
 }
 
-const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
+const { title, description } = Astro.props;
 ---
 
-<html lang="en">
-  <head>
-    <BaseHead title={title} description={description} />
-  </head>
-
-  <body>
-    <Nav />
-
-    <main class="container">
-      <slot />
-    </main>
-
-    <Footer />
-  </body>
-</html>
+<BaseLayout title={title} description={description}>
+  <slot />
+</BaseLayout>

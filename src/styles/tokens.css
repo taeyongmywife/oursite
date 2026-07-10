@@ -1,0 +1,47 @@
+:root {
+  --bg-void: #0a0a0c;
+  --bg-shelf: #14141a;
+  --bg-display: #1c1c24;
+
+  --rock-basalt: #2a2a32;
+  --rock-granite: #5a5a64;
+
+  --paper-bone: #d4d0c4;
+  --paper-rust: #b8a080;
+
+  --mineral-copper: #c87a4a;
+  --mineral-moss: #6b7a3a;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --container-max: 720px;
+  --container-pad: var(--space-6);
+
+  --border-thin: 1px dashed var(--rock-granite);
+  --border-solid: 1px solid var(--rock-basalt);
+  --border-active: 2px solid var(--mineral-copper);
+
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font-serif: "EB Garamond", "Cormorant Garamond", "Songti SC", "Source Han Serif SC", "Noto Serif SC", serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", "Sarasa Mono SC", ui-monospace, monospace;
+}

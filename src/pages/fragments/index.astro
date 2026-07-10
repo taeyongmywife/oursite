@@ -1,198 +1,53 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from 'astro:content';
-import { getEntryPath } from '../../lib/content';
+import RockCard from "../../components/RockCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
 
-const fragments = await getCollection('fragments');
-
-const subjects = [
-  { id: 'MEMORY', name: 'MEMORY', desc: 'The way humans store, forget and reconstruct themselves.' },
-  { id: 'HUMAN', name: 'HUMAN', desc: 'Observations on human behavior and interactions.' },
-  { id: 'MUSIC', name: 'MUSIC', desc: 'Feelings and understandings about sound and rhythm.' },
-  { id: 'BODY', name: 'BODY', desc: 'Dance and physical experiences.' },
-  { id: 'DESIGN', name: 'DESIGN', desc: 'Thoughts on aesthetics and creation.' },
-  { id: 'SOCIETY', name: 'SOCIETY', desc: 'Observations on social structures.' },
-  { id: 'TECHNOLOGY', name: 'TECHNOLOGY', desc: 'Thoughts on tools and systems.' }
-];
+const fragments = await getCollection("fragments");
+const sorted = [...fragments].sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
 ---
 
-<Layout title="FRAGMENTS | BubbleCrisp" description="Fragment Database - A collection of thoughts and observations.">
-  <div class="fragments-page">
-    <div class="page-header">
-      <h1 class="page-title">FRAGMENTS</h1>
-      <span class="page-subtitle">碎片档案</span>
-      <p class="page-desc">SELECT A SUBJECT</p>
-    </div>
+<Layout
+  title="FRAGMENTS | BubbleCrisp"
+  description="Each entry is a specimen. Crystallized from fleeting thoughts, observations, and rough notes."
+>
+  <section class="page">
+    <SectionHeader en="FRAGMENTS" cn="碎片档案" count={fragments.length} />
+    <p class="section-intro">
+      Each entry is a specimen. Crystallized from fleeting thoughts, observations, and rough notes.
+    </p>
 
-    <div class="subjects-grid">
-      {subjects.map((subject) => {
-        const subjectFragments = fragments.filter(f => f.data.subject === subject.id);
-        return (
-          <a href={`/fragments?subject=${subject.id}`} class="subject-card">
-            <div class="subject-name">[ {subject.name} ]</div>
-            <p class="subject-desc">{subject.desc}</p>
-            <div class="subject-count">{subjectFragments.length} fragments collected.</div>
-          </a>
-        );
-      })}
-    </div>
-
-    <div class="fragments-list">
-      {fragments.map((fragment, i) => (
-        <a href={`/fragments/${getEntryPath(fragment)}`} class="fragment-item">
-          <div class="fragment-meta">
-            <span class="fragment-id">FRAGMENT_{String(i + 1).padStart(3, '0')}</span>
-            <span class="fragment-status">{fragment.data.status}</span>
-          </div>
-          <h2 class="fragment-title">{fragment.data.title}</h2>
-          <div class="fragment-details">
-            <span class="fragment-type">TYPE: {fragment.data.type}</span>
-            <span class="fragment-date">DATE: {fragment.data.pubDate.toISOString().split('T')[0]}</span>
-          </div>
-        </a>
+    <div class="list">
+      {sorted.map((fragment, i) => (
+        <RockCard
+          id={String(fragments.length - i)}
+          titleCn={fragment.data.title}
+          titleEn={fragment.data.subject}
+          date={fragment.data.pubDate.toISOString().split("T")[0]}
+          href={`/fragments/${fragment.id.replace(/\.(md|mdx)$/, "")}`}
+          variant="card"
+        />
       ))}
     </div>
-  </div>
+  </section>
 </Layout>
 
 <style>
-.fragments-page {
-  padding: var(--space-12) 0;
+.page {
+  padding: var(--space-16) 0;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: var(--space-16);
+.section-intro {
+  margin: 0 0 var(--space-8) 0;
+  color: var(--paper-rust);
 }
 
-.page-title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2) 0;
-}
-
-.page-subtitle {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  display: block;
-  margin-bottom: var(--space-4);
-}
-
-.page-desc {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-  letter-spacing: 0.1em;
-}
-
-.subjects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-4);
-  margin-bottom: var(--space-16);
-}
-
-.subject-card {
-  display: block;
-  padding: var(--space-6);
-  border: 1px solid var(--border);
-  background-color: var(--background-elevated);
-  text-decoration: none;
-  transition: all var(--duration-base) var(--ease-out);
-}
-
-.subject-card:hover {
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-}
-
-.subject-name {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: var(--space-3);
-  color: var(--accent);
-}
-
-.subject-desc {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  line-height: var(--leading-relaxed);
-  margin: 0 0 var(--space-3) 0;
-}
-
-.subject-count {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted-soft);
-}
-
-.fragments-list {
+.list {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border-top: 1px solid var(--border);
-}
-
-.fragment-item {
-  display: block;
-  padding: var(--space-8) 0;
-  border-bottom: 1px solid var(--border);
-  text-decoration: none;
-  transition: opacity var(--duration-base) var(--ease-out);
-}
-
-.fragment-item:hover {
-  opacity: 0.7;
-}
-
-.fragment-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-3);
-}
-
-.fragment-id {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-.fragment-status {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft);
-  padding: var(--space-1) var(--space-3);
-}
-
-.fragment-title {
-  font-size: var(--text-xl);
-  font-weight: var(--font-normal);
-  margin: 0 0 var(--space-4) 0;
-  color: var(--foreground);
-}
-
-.fragment-details {
-  display: flex;
-  gap: var(--space-6);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-@media (max-width: 768px) {
-  .subjects-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .fragment-details {
-    flex-direction: column;
-    gap: var(--space-2);
-  }
+  gap: var(--space-2);
 }
 </style>

@@ -1,0 +1,62 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-void);
+  color: var(--paper-bone);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("/textures/noise.png");
+  background-size: 200px 200px;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+}
+
+a {
+  color: inherit;
+}
+
+body > header,
+body > main,
+body > footer {
+  position: relative;
+  z-index: 2;
+}
+
+main {
+  min-height: 60vh;
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+}
+
+:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-4);
+  }
+}

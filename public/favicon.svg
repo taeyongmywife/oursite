@@ -1,11 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <circle cx="64" cy="64" r="58" fill="none" stroke="currentColor" stroke-width="8"/>
-  <path d="M64 18 L72 56 L110 64 L72 72 L64 110 L56 72 L18 64 L56 56 Z" fill="currentColor"/>
-  <path d="M64 36 L68 56 L88 64 L68 72 L64 92 L60 72 L40 64 L60 56 Z" fill="none" stroke="white" stroke-width="4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <path
+    d="M16 2 L19 9 L26 6 L23 13 L30 16 L23 19 L26 26 L19 23 L16 30 L13 23 L6 26 L9 19 L2 16 L9 13 L6 6 L13 9 Z"
+    fill="currentColor"
+  />
+  <path d="M9 23 L23 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
   <style>
-    svg { color: #000; }
-    @media (prefers-color-scheme: dark) {
-      svg { color: #FFF; }
-    }
+    svg { color: #d4d0c4; }
   </style>
 </svg>

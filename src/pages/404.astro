@@ -1,0 +1,119 @@
+---
+import { Image } from "astro:assets";
+import BaseHead from "../components/BaseHead.astro";
+import agate from "../assets/mineral/03-agate-copper-backlit.png";
+import "../styles/tokens.css";
+import "../styles/fonts.css";
+import "../styles/base.css";
+---
+
+<html lang="zh-CN">
+  <head>
+    <BaseHead title="404 · Specimen Unknown" description="This specimen is not in the cabinet." />
+  </head>
+  <body>
+    <main class="container">
+      <section class="notfound">
+        <div class="mark">◆</div>
+        <h1 class="title-cn">这块标本不在这柜子里</h1>
+        <p class="title-en">This specimen is not in the cabinet.</p>
+        <p class="desc-cn">可能正在结晶中，或从未存在。</p>
+        <p class="desc-en">Perhaps still crystallizing, or perhaps never existed.</p>
+        <a class="cta" href="/">[▸ RETURN TO ENTRANCE]</a>
+        <div class="line"></div>
+        <div class="meta">ERROR 404 · SPECIMEN UNKNOWN</div>
+        <div class="figure">
+          <Image src={agate} alt="Agate specimen figure" width={520} height={520} />
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
+<style>
+.notfound {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: var(--space-16) 0;
+  position: relative;
+}
+
+.mark {
+  font-family: var(--font-mono);
+  color: var(--paper-bone);
+  margin-bottom: var(--space-6);
+}
+
+.title-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  margin: 0;
+}
+
+.title-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--paper-rust);
+  letter-spacing: 0.1em;
+  margin: var(--space-2) 0 0 0;
+}
+
+.desc-cn,
+.desc-en {
+  margin: var(--space-4) 0 0 0;
+}
+
+.desc-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--rock-granite);
+  letter-spacing: 0.05em;
+}
+
+.cta {
+  display: inline-block;
+  margin-top: var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: var(--paper-bone);
+}
+
+.cta:hover {
+  color: var(--mineral-copper);
+}
+
+.line {
+  height: 1px;
+  width: min(420px, 100%);
+  background: var(--rock-basalt);
+  margin: var(--space-12) 0 var(--space-4) 0;
+}
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.15em;
+}
+
+.figure {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.figure :global(img) {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+</style>

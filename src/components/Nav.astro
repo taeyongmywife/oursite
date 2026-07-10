@@ -1,89 +1,249 @@
 ---
-const nav = [
-  { name: "FRAGMENTS", nameCN: "碎片档案", href: "/fragments" },
-  { name: "EXPERIMENTS", nameCN: "实验记录", href: "/experiments" },
-  { name: "MARKET", nameCN: "商业实验", href: "/market" },
-  { name: "IDENTITY", nameCN: "个人档案", href: "/identity" }
+const items = [
+  { en: "FRAGMENTS", cn: "碎片档案", href: "/fragments" },
+  { en: "EXPERIMENTS", cn: "实验记录", href: "/experiments" },
+  { en: "MARKET", cn: "商业实验", href: "/market" },
+  { en: "IDENTITY", cn: "个人档案", href: "/identity" },
 ];
+
+const pathname = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/"
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
 ---
 
 <header class="nav">
   <a href="/" class="logo">
-    <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-      <circle cx="64" cy="64" r="58" fill="none" stroke="currentColor" stroke-width="8"/>
-      <path d="M64 18 L72 56 L110 64 L72 72 L64 110 L56 72 L18 64 L56 56 Z" fill="currentColor"/>
-      <path d="M64 36 L68 56 L88 64 L68 72 L64 92 L60 72 L40 64 L60 56 Z" fill="none" stroke="var(--background)" stroke-width="4"/>
+    <svg class="logo-icon" viewBox="0 0 32 32" aria-hidden="true">
+      <path
+        d="M16 2 L19 9 L26 6 L23 13 L30 16 L23 19 L26 26 L19 23 L16 30 L13 23 L6 26 L9 19 L2 16 L9 13 L6 6 L13 9 Z"
+        fill="currentColor"
+      />
+      <path
+        d="M9 23 L23 9"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
     </svg>
-    BubbleCrisp
+    <span class="logo-text">BubbleCrisp</span>
   </a>
 
-  <nav>
-    {nav.map(i => (
-      <a href={i.href} class="nav-link">
-        <span class="nav-link-en">{i.name}</span>
-        <span class="nav-link-cn">{i.nameCN}</span>
+  <nav class="nav-items nav-desktop">
+    {items.map((item) => (
+      <a
+        href={item.href}
+        class:list={["nav-link", isActive(item.href) && "active"]}
+      >
+        <span class="nav-link-en">{item.en}</span>
+        <span class="nav-link-cn">{item.cn}</span>
       </a>
     ))}
   </nav>
+
+  <div class="mobile-nav" data-mobile-nav>
+    <button
+      type="button"
+      class="mobile-toggle"
+      aria-label="Open navigation menu"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      data-mobile-toggle
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="mobile-menu" id="mobile-menu" data-mobile-menu hidden>
+      {items.map((item) => (
+        <a
+          href={item.href}
+          class:list={["mobile-link", isActive(item.href) && "active"]}
+        >
+          <span class="nav-link-en">{item.en}</span>
+          <span class="nav-link-cn">{item.cn}</span>
+        </a>
+      ))}
+    </nav>
+  </div>
 </header>
 
 <style>
 .nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--border);
-  background-color: var(--background-elevated);
+  justify-content: space-between;
+  padding: var(--space-6) var(--container-pad);
+  border-bottom: var(--border-solid);
+  background: var(--bg-void);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 10;
 }
 
-nav {
+.nav-items {
   display: flex;
   gap: var(--space-8);
+}
+
+.mobile-nav {
+  display: none;
 }
 
 .nav-link {
   text-decoration: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  transition: opacity var(--duration-base) var(--ease-out);
+  gap: 2px;
+  font-family: var(--font-mono);
+  position: relative;
 }
 
 .nav-link:hover {
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .nav-link-en {
-  color: var(--foreground);
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.1em;
+  color: var(--paper-bone);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
 .nav-link-cn {
-  color: var(--muted);
+  color: var(--rock-granite);
   font-size: var(--text-xs);
+}
+
+.nav-link.active .nav-link-en {
+  color: var(--mineral-copper);
+}
+
+.nav-link.active::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: var(--mineral-copper);
+  margin-top: 4px;
+  width: 100%;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-weight: var(--font-semibold);
-  font-size: var(--text-sm);
-  letter-spacing: 0.05em;
-  color: var(--foreground);
+  color: var(--paper-bone);
   text-decoration: none;
 }
 
 .logo-icon {
   width: 24px;
   height: 24px;
-  color: var(--foreground);
+  color: var(--paper-bone);
+}
+
+.logo-text {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    padding: var(--space-4) var(--container-pad);
+  }
+
+  .nav-desktop {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: block;
+    position: relative;
+  }
+
+  .mobile-toggle {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: var(--space-2);
+    border: 0;
+    background: transparent;
+  }
+
+  .mobile-toggle span {
+    display: block;
+    width: 22px;
+    height: 1.5px;
+    background: var(--paper-bone);
+  }
+
+  .mobile-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--space-3));
+    width: min(260px, calc(100vw - 2 * var(--container-pad)));
+    padding: var(--space-4);
+    border: var(--border-solid);
+    background: rgba(10, 10, 12, 0.96);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .mobile-menu[hidden] {
+    display: none !important;
+  }
+
+  .mobile-link {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-decoration: none;
+  }
+
+  .mobile-link.active .nav-link-en {
+    color: var(--mineral-copper);
+  }
+
+  .logo-text {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+  }
 }
 </style>
+
+<script is:inline>
+  const mobileNav = document.querySelector("[data-mobile-nav]");
+  const mobileToggle = document.querySelector("[data-mobile-toggle]");
+  const mobileMenu = document.querySelector("[data-mobile-menu]");
+
+  if (mobileNav && mobileToggle instanceof HTMLButtonElement && mobileMenu instanceof HTMLElement) {
+    const closeMenu = () => {
+      mobileNav.classList.remove("is-open");
+      mobileToggle.setAttribute("aria-expanded", "false");
+      mobileMenu.hidden = true;
+    };
+
+    mobileToggle.addEventListener("click", () => {
+      const isOpen = mobileNav.classList.toggle("is-open");
+      mobileToggle.setAttribute("aria-expanded", String(isOpen));
+      mobileMenu.hidden = !isOpen;
+    });
+
+    mobileMenu.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", closeMenu);
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 768) {
+        closeMenu();
+      }
+    });
+  }
+</script>

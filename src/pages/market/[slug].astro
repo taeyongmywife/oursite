@@ -1,50 +1,62 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection, render } from 'astro:content';
-import { getEntryPath } from '../../lib/content';
+import ChoicePanel from "../../components/ChoicePanel.astro";
+import SpecimenLabel from "../../components/SpecimenLabel.astro";
 
 export async function getStaticPaths() {
   const cases = await getCollection('cases');
   return cases.map((c) => ({
-    params: { slug: getEntryPath(c) },
+    params: { slug: c.id.replace(/\.(md|mdx)$/, "") },
   }));
 }
 
 const cases = await getCollection('cases');
 const slug = Astro.params.slug;
-const caseData = cases.find((entry) => getEntryPath(entry) === slug);
+const caseData = cases.find((entry) => entry.id.replace(/\.(md|mdx)$/, "") === slug);
 
 if (!caseData) {
   throw new Error(`Case not found for slug: ${slug}`);
 }
 
 const { Content } = await render(caseData);
+const collected = caseData.data.pubDate.toISOString().split("T")[0];
+const sorted = [...cases].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const specimenId = String(sorted.findIndex((entry) => entry.id === caseData.id) + 1).padStart(
+  4,
+  "0",
+);
 ---
 
 <Layout title={`${caseData.data.title} | MARKET`} description={caseData.data.title}>
   <article class="case-detail">
-    <div class="case-header">
-      <span class="case-id">CASE_001</span>
-      <span class="case-status">{caseData.data.status}</span>
-    </div>
-    
-    <h1 class="case-title">{caseData.data.title}</h1>
-    
-    <div class="case-meta">
-      <div class="meta-item">
-        <span class="meta-label">DATE:</span>
-        <span class="meta-value">{caseData.data.pubDate.toISOString().split('T')[0]}</span>
-      </div>
-    </div>
+    <SpecimenLabel
+      id={specimenId}
+      titleCn={caseData.data.title}
+      titleEn="Market specimen"
+      collected={collected}
+      location="digital sediment"
+      composition="commerce / experiment"
+      status={caseData.data.status === "Archived" ? "archived" : "crystallizing"}
+      variant="full"
+    />
 
     <div class="observation-section">
-      <h2 class="observation-label">OBSERVATION</h2>
+      <div class="observation-label">OBSERVATION</div>
       <p class="observation-text">{caseData.data.observation}</p>
     </div>
 
     <div class="case-content">
       <Content />
     </div>
+
+    <ChoicePanel
+      prompt="离开交易抽屉 / Close this drawer"
+      options={[
+        { label: "回到列表", href: "/market" },
+        { label: "进入碎片柜", href: "/fragments" },
+      ]}
+    />
 
     <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
   </article>
@@ -57,82 +69,34 @@ const { Content } = await render(caseData);
   margin: 0 auto;
 }
 
-.case-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-8);
-}
-
-.case-id {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-.case-status {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft);
-  padding: var(--space-1) var(--space-3);
-}
-
-.case-title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-normal);
-  margin: 0 0 var(--space-8) 0;
-  line-height: var(--leading-tight);
-}
-
-.case-meta {
-  margin-bottom: var(--space-8);
-}
-
-.meta-item {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  display: flex;
-  gap: var(--space-2);
-}
-
-.meta-label {
-  color: var(--muted);
-}
-
-.meta-value {
-  color: var(--foreground);
-}
-
 .observation-section {
   margin-bottom: var(--space-8);
   padding: var(--space-6);
-  border: 1px solid var(--border);
-  background-color: var(--background-elevated);
+  border: var(--border-thin);
+  background: var(--bg-shelf);
 }
 
 .observation-label {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted);
-  margin: 0 0 var(--space-3) 0;
+  color: var(--rock-granite);
+  margin-bottom: var(--space-3);
 }
 
 .observation-text {
   font-size: var(--text-base);
-  color: var(--foreground);
+  color: var(--paper-bone);
   margin: 0;
-  line-height: var(--leading-relaxed);
+  line-height: 1.75;
   font-style: italic;
 }
 
 .case-content {
   font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  color: var(--foreground);
+  line-height: 1.75;
+  color: var(--paper-bone);
 }
 
 .case-content :global(p) {
@@ -150,7 +114,7 @@ const { Content } = await render(caseData);
   margin-top: var(--space-12);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--foreground);
+  color: var(--paper-bone);
   text-decoration: none;
   transition: opacity var(--duration-base) var(--ease-out);
 }

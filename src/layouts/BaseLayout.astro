@@ -1,0 +1,76 @@
+---
+import { Image } from "astro:assets";
+import basalt from "../assets/mineral/04-basalt-columns.png";
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import Nav from "../components/Nav.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+import "../styles/tokens.css";
+import "../styles/fonts.css";
+import "../styles/base.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
+---
+
+<html lang="zh-CN">
+  <head>
+    <BaseHead title={title} description={description} />
+  </head>
+  <body>
+    <Nav />
+    <div class="site-basalt" aria-hidden="true">
+      <Image src={basalt} alt="" width={1800} height={1800} />
+    </div>
+    <main class="container">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+.site-basalt {
+  position: fixed;
+  left: 50%;
+  bottom: -180px;
+  transform: translateX(-50%);
+  width: min(1400px, 140vw);
+  pointer-events: none;
+  opacity: 0.16;
+  z-index: 0;
+  filter: grayscale(1) brightness(0.5);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.92) 25%,
+    rgba(0, 0, 0, 0.45) 58%,
+    rgba(0, 0, 0, 0) 78%
+  );
+  mask-image: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.92) 25%,
+    rgba(0, 0, 0, 0.45) 58%,
+    rgba(0, 0, 0, 0) 78%
+  );
+}
+
+.site-basalt :global(img) {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .site-basalt {
+    width: 180vw;
+    bottom: -120px;
+    opacity: 0.14;
+  }
+}
+</style>

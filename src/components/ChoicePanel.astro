@@ -1,0 +1,60 @@
+---
+interface Props {
+  prompt: string;
+  options: { label: string; href?: string }[];
+}
+
+const { prompt, options } = Astro.props;
+---
+
+<div class="choice-panel">
+  <div class="choice-prompt">{prompt}</div>
+  <div class="choice-options">
+    {options.map((opt) => (
+      <a href={opt.href ?? "#"} class="choice-option">
+        {opt.label}
+      </a>
+    ))}
+  </div>
+</div>
+
+<style>
+.choice-panel {
+  background: rgba(107, 122, 58, 0.85);
+  border: 1px solid var(--mineral-copper);
+  padding: var(--space-6);
+  margin: var(--space-12) 0;
+  font-family: var(--font-mono);
+}
+
+.choice-prompt {
+  font-size: var(--text-sm);
+  color: var(--paper-bone);
+  margin-bottom: var(--space-4);
+}
+
+.choice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.choice-option {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--mineral-copper);
+  color: var(--paper-bone);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.choice-option:last-child {
+  border-bottom: 1px solid var(--mineral-copper);
+}
+
+.choice-option:hover {
+  background: var(--paper-bone);
+  color: var(--bg-void);
+}
+</style>

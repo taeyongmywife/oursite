@@ -1,130 +1,112 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection } from 'astro:content';
-import { getEntryPath } from '../../lib/content';
+import { getCollection } from "astro:content";
+import SectionHeader from "../../components/SectionHeader.astro";
 
-const cases = await getCollection('cases');
+const cases = await getCollection("cases");
+const sorted = [...cases].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 ---
 
 <Layout title="MARKET | BubbleCrisp" description="Market Lab - A record of business experiments.">
-  <div class="market-page">
-    <div class="page-header">
-      <h1 class="page-title">MARKET</h1>
-      <span class="page-subtitle">商业实验</span>
-    </div>
+  <section class="page">
+    <SectionHeader en="MARKET" cn="商业实验" count={cases.length} />
+    <p class="section-intro">
+      This is the only drawer allowed to feel slightly transactional. Still: quiet, numbered,
+      and filed.
+    </p>
 
-    <div class="cases-list">
-      {cases.map((c, i) => (
-        <a href={`/market/${getEntryPath(c)}`} class="case-card">
-          <div class="case-meta">
-            <span class="case-id">CASE_{String(i + 1).padStart(3, '0')}</span>
-            <span class="case-status">{c.data.status}</span>
+    <div class="list">
+      {sorted.map((c, i) => (
+        <a href={`/market/${c.id.replace(/\.(md|mdx)$/, "")}`} class="market-item">
+          <div class="market-head">
+            <div class="market-id">#{String(cases.length - i).padStart(4, "0")}</div>
+            <div class="market-status">{c.data.status}</div>
           </div>
-          <h2 class="case-title">{c.data.title}</h2>
-          <p class="case-observation">{c.data.observation}</p>
-          <div class="case-date">
-            <span>DATE: {c.data.pubDate.toISOString().split('T')[0]}</span>
-          </div>
+          <div class="market-title">{c.data.title}</div>
+          <div class="market-desc">{c.data.observation}</div>
+          <div class="market-meta">{c.data.pubDate.toISOString().split("T")[0]}</div>
         </a>
       ))}
-      {cases.length === 0 && (
-        <div class="empty-state">
-          <p>No market experiments yet.</p>
-        </div>
-      )}
+
+      {cases.length === 0 && <div class="empty-state">No market experiments yet.</div>}
     </div>
-  </div>
+  </section>
 </Layout>
 
 <style>
-.market-page {
-  padding: var(--space-12) 0;
+.page {
+  padding: var(--space-16) 0;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: var(--space-16);
+.section-intro {
+  margin: 0 0 var(--space-8) 0;
+  color: var(--paper-rust);
 }
 
-.page-title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2) 0;
-}
-
-.page-subtitle {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  display: block;
-}
-
-.cases-list {
+.list {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border-top: 1px solid var(--border);
+  gap: var(--space-4);
 }
 
-.case-card {
+.market-item {
   display: block;
-  padding: var(--space-8) 0;
-  border-bottom: 1px solid var(--border);
+  padding: var(--space-6);
+  border: var(--border-solid);
+  background: rgba(10, 10, 12, 0.72);
   text-decoration: none;
   transition: opacity var(--duration-base) var(--ease-out);
 }
 
-.case-card:hover {
-  opacity: 0.7;
+.market-item:hover {
+  opacity: 0.85;
 }
 
-.case-meta {
+.market-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-3);
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
-.case-id {
+.market-id {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted);
+  color: var(--mineral-copper);
+  letter-spacing: 0.05em;
 }
 
-.case-status {
+.market-status {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft);
-  padding: var(--space-1) var(--space-3);
+  color: var(--rock-granite);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-.case-title {
+.market-title {
+  font-family: var(--font-serif);
   font-size: var(--text-xl);
-  font-weight: var(--font-normal);
-  margin: 0 0 var(--space-3) 0;
-  color: var(--foreground);
+  color: var(--mineral-copper);
 }
 
-.case-observation {
-  font-size: var(--text-base);
-  color: var(--muted);
-  margin: 0 0 var(--space-4) 0;
-  line-height: var(--leading-relaxed);
-  font-style: italic;
+.market-desc {
+  margin-top: var(--space-3);
+  color: var(--paper-bone);
 }
 
-.case-date {
+.market-meta {
+  margin-top: var(--space-3);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted);
+  color: var(--rock-granite);
 }
 
 .empty-state {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted);
+  color: var(--rock-granite);
   padding: var(--space-12) 0;
   text-align: center;
 }

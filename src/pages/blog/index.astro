@@ -1,7 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import ArchiveCard from '../../components/cards/ArchiveCard.astro';
+import RockCard from "../../components/RockCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
 import {
   BLOG_CATEGORIES,
   createBlogIdMap,
@@ -15,77 +16,69 @@ const posts = await getCollection('blog');
 const featuredPosts = posts.filter((post) => post.data.featured);
 const sortedPosts = sortBlogPosts(posts);
 const postIdMap = createBlogIdMap(posts);
+
+const toNumericId = (value: string) => (value.match(/\d+/)?.[0] ?? "0").padStart(4, "0");
 ---
 
-<Layout title="FRAGMENTS | 碎片档案">
-  <div class="blog-header">
-    <p class="label-en">FRAGMENTS</p>
-    <div class="title-section">
-      <h1 class="title-zh">碎片档案</h1>
-      <p class="subtitle-en">Creative Research Archive</p>
-    </div>
+<Layout title="BLOG | BubbleCrisp">
+  <section class="page">
+    <SectionHeader en="BLOG" cn="档案文本" count={posts.length} />
     <p class="subtitle">记录关于 AI、创造、商业与意识的探索样本。</p>
-  </div>
 
-  <div class="category-nav" data-category-nav>
-    {BLOG_CATEGORIES.map((category) => (
-      <a
-        href={category.slug === 'all' ? '/blog' : `/blog?category=${category.slug}`}
-        class:list={['category-item', category.slug === 'all' && 'active']}
-        data-category-trigger={category.slug}
-      >
-        {category.label}
-      </a>
-    ))}
-  </div>
-
-  <div class="posts-region" data-posts-region>
-    {featuredPosts.length > 0 && (
-    <div class="featured-section" data-post-section="featured">
-      <p class="section-label">Featured</p>
-      <p class="section-title">精选档案</p>
-      <div class="posts-grid">
-        {featuredPosts.map((post) => (
-          <ArchiveCard
-            href={`/blog/${getBlogPostPath(post)}`}
-            id={postIdMap.get(getBlogPostPath(post)) ?? 'FRAGMENT_000'}
-            title={post.data.title}
-            description={post.data.description}
-            date={formatBlogDate(post.data.pubDate)}
-            category={getBlogCategoryLabel(post.data.category)}
-            status={post.data.status}
-            readingTime={post.data.readingTime}
-            data-category={post.data.category}
-            data-post-card
-          />
-        ))}
-      </div>
-    </div>
-  )}
-
-    <div class="all-section" data-post-section="archive">
-    <p class="section-label">Archive</p>
-    <p class="section-title">档案库</p>
-    <div class="posts-grid">
-      {sortedPosts.map((post) => (
-        <ArchiveCard
-          href={`/blog/${getBlogPostPath(post)}`}
-          id={postIdMap.get(getBlogPostPath(post)) ?? 'FRAGMENT_000'}
-          title={post.data.title}
-          description={post.data.description}
-          date={formatBlogDate(post.data.pubDate)}
-          category={getBlogCategoryLabel(post.data.category)}
-          status={post.data.status}
-          readingTime={post.data.readingTime}
-          data-category={post.data.category}
-          data-post-card
-        />
+    <div class="category-nav" data-category-nav>
+      {BLOG_CATEGORIES.map((category) => (
+        <a
+          href={category.slug === 'all' ? '/blog' : `/blog?category=${category.slug}`}
+          class:list={['category-item', category.slug === 'all' && 'active']}
+          data-category-trigger={category.slug}
+        >
+          {category.label}
+        </a>
       ))}
+    </div>
+
+    <div class="posts-region" data-posts-region>
+      {featuredPosts.length > 0 && (
+        <div class="featured-section" data-post-section="featured">
+          <p class="section-label">Featured</p>
+          <p class="section-title">精选档案</p>
+          <div class="posts-grid">
+            {featuredPosts.map((post) => (
+              <RockCard
+                href={`/blog/${getBlogPostPath(post)}`}
+                id={toNumericId(postIdMap.get(getBlogPostPath(post)) ?? "0000")}
+                titleCn={post.data.title}
+                titleEn={getBlogCategoryLabel(post.data.category)}
+                date={formatBlogDate(post.data.pubDate)}
+                data-category={post.data.category}
+                data-post-card
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div class="all-section" data-post-section="archive">
+        <p class="section-label">Archive</p>
+        <p class="section-title">档案库</p>
+        <div class="posts-grid">
+          {sortedPosts.map((post) => (
+            <RockCard
+              href={`/blog/${getBlogPostPath(post)}`}
+              id={toNumericId(postIdMap.get(getBlogPostPath(post)) ?? "0000")}
+              titleCn={post.data.title}
+              titleEn={getBlogCategoryLabel(post.data.category)}
+              date={formatBlogDate(post.data.pubDate)}
+              data-category={post.data.category}
+              data-post-card
+            />
+          ))}
+        </div>
       </div>
     </div>
-  </div>
 
-  <p class="empty-state" data-empty-state hidden>该分类下暂时还没有可阅读的档案。</p>
+    <p class="empty-state" data-empty-state hidden>该分类下暂时还没有可阅读的档案。</p>
+  </section>
 </Layout>
 
 <script is:inline define:vars={{ validCategories: BLOG_CATEGORIES.map((item) => item.slug) }}>
@@ -177,45 +170,15 @@ const postIdMap = createBlogIdMap(posts);
 </script>
 
 <style>
-.blog-header {
-  margin-bottom: var(--space-12);
-}
-
-.label-en {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2) 0;
-}
-
-.title-section {
-  margin-bottom: var(--space-4);
-  display: flex;
-  flex-direction: column;
-}
-
-.title-zh {
-  font-size: var(--text-4xl);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-tight);
-  margin: 0;
-}
-
-.subtitle-en {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--accent);
-  margin: var(--space-1) 0 0 var(--space-2);
-  letter-spacing: 0.05em;
+.page {
+  padding: var(--space-16) 0;
 }
 
 .subtitle {
   font-size: var(--text-lg);
-  color: var(--muted);
-  line-height: var(--leading-relaxed);
-  margin: 0;
+  color: var(--paper-rust);
+  line-height: 1.75;
+  margin: 0 0 var(--space-8) 0;
 }
 
 .category-nav {
@@ -224,13 +187,13 @@ const postIdMap = createBlogIdMap(posts);
   gap: var(--space-4);
   margin-bottom: var(--space-12);
   padding-bottom: var(--space-6);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-thin);
 }
 
 .category-item {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--muted-soft);
+  color: var(--rock-granite);
   cursor: pointer;
   padding: var(--space-2) 0;
   transition:
@@ -240,12 +203,12 @@ const postIdMap = createBlogIdMap(posts);
 }
 
 .category-item:hover {
-  color: var(--foreground);
+  color: var(--paper-bone);
 }
 
 .category-item.active {
-  color: var(--foreground);
-  border-bottom: 1px solid var(--foreground);
+  color: var(--paper-bone);
+  border-bottom: 1px solid var(--mineral-copper);
 }
 
 .posts-region {
@@ -265,17 +228,18 @@ const postIdMap = createBlogIdMap(posts);
 .section-label {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted-soft);
+  color: var(--rock-granite);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin: 0 0 var(--space-2) 0;
 }
 
 .section-title {
+  font-family: var(--font-serif);
   font-size: var(--text-xl);
-  font-weight: var(--font-medium);
+  font-weight: 400;
   margin: 0 0 var(--space-6) 0;
-  color: var(--foreground);
+  color: var(--paper-bone);
 }
 
 .posts-grid {
@@ -287,7 +251,7 @@ const postIdMap = createBlogIdMap(posts);
 .empty-state {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--muted);
+  color: var(--rock-granite);
   margin: 0;
 }
 </style>

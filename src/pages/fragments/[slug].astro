@@ -1,64 +1,71 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection, render } from 'astro:content';
-import { getEntryPath } from '../../lib/content';
+import ChoicePanel from "../../components/ChoicePanel.astro";
+import MineralFigure from "../../components/MineralFigure.astro";
+import SpecimenLabel from "../../components/SpecimenLabel.astro";
+import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
 export async function getStaticPaths() {
   const fragments = await getCollection('fragments');
   return fragments.map((fragment) => ({
-    params: { slug: getEntryPath(fragment) },
+    params: { slug: fragment.id.replace(/\.(md|mdx)$/, "") },
   }));
 }
 
 const fragments = await getCollection('fragments');
 const slug = Astro.params.slug;
-const fragment = fragments.find((entry) => getEntryPath(entry) === slug);
+const fragment = fragments.find((entry) => entry.id.replace(/\.(md|mdx)$/, "") === slug);
 
 if (!fragment) {
   throw new Error(`Fragment not found for slug: ${slug}`);
 }
 
 const { Content } = await render(fragment);
+const collected = fragment.data.pubDate.toISOString().split("T")[0];
+const status =
+  fragment.data.status?.toLowerCase?.().includes("archive") ? "archived" : "crystallizing";
+const sorted = [...fragments].sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
+const specimenId = String(sorted.findIndex((entry) => entry.id === fragment.id) + 1).padStart(
+  4,
+  "0",
+);
+const heroFigure = fragment.data.heroImage ?? quartz;
+const heroAlt = fragment.data.heroImage
+  ? `${fragment.data.title} figure`
+  : "Dark quartz cluster specimen";
 ---
 
 <Layout title={`${fragment.data.title} | FRAGMENTS`} description={fragment.data.title}>
   <article class="fragment-detail">
-    <div class="fragment-header">
-      <span class="fragment-id">FRAGMENT_001</span>
-      <span class="fragment-status">{fragment.data.status}</span>
-    </div>
-    
-    <h1 class="fragment-title">{fragment.data.title}</h1>
-    
-    <div class="fragment-meta">
-      <div class="meta-item">
-        <span class="meta-label">TYPE:</span>
-        <span class="meta-value">{fragment.data.type}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">SUBJECT:</span>
-        <span class="meta-value">{fragment.data.subject}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">DATE:</span>
-        <span class="meta-value">{fragment.data.pubDate.toISOString().split('T')[0]}</span>
-      </div>
-    </div>
+    <SpecimenLabel
+      id={specimenId}
+      titleCn={fragment.data.title}
+      titleEn={fragment.data.subject}
+      collected={collected}
+      location="digital sediment"
+      composition={`${fragment.data.type} / ${fragment.data.subject}`}
+      status={status}
+      variant="full"
+    />
 
-    {fragment.data.tags && fragment.data.tags.length > 0 && (
-      <div class="fragment-tags">
-        <span class="meta-label">TAGS:</span>
-        <div class="tags-list">
-          {fragment.data.tags.map(tag => (
-            <span class="tag">{tag}</span>
-          ))}
-        </div>
-      </div>
-    )}
+    <div class="hero-figure">
+      <MineralFigure src={heroFigure} alt={heroAlt} caption="Specimen figure" />
+    </div>
 
     <div class="fragment-content">
       <Content />
     </div>
+
+    <ChoicePanel
+      prompt="你看向她，眼神里带着"
+      options={[
+        { label: "回到陈列", href: "/fragments" },
+        { label: "继续探索", href: "/experiments" },
+      ]}
+    />
 
     <a href="/fragments" class="back-link">[ BACK TO FRAGMENTS ]</a>
   </article>
@@ -71,98 +78,29 @@ const { Content } = await render(fragment);
   margin: 0 auto;
 }
 
-.fragment-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-8);
-}
-
-.fragment-id {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-.fragment-status {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft);
-  padding: var(--space-1) var(--space-3);
-}
-
-.fragment-title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-normal);
-  margin: 0 0 var(--space-8) 0;
-  line-height: var(--leading-tight);
-}
-
-.fragment-meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-8);
-  padding: var(--space-6);
-  border: 1px solid var(--border);
-  background-color: var(--background-elevated);
-}
-
-.meta-item {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  display: flex;
-  gap: var(--space-2);
-}
-
-.meta-label {
-  color: var(--muted);
-}
-
-.meta-value {
-  color: var(--foreground);
-}
-
-.fragment-tags {
-  margin-bottom: var(--space-8);
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-}
-
-.tags-list {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.tag {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--muted);
-  border: 1px solid var(--border);
-  padding: var(--space-1) var(--space-3);
+.hero-figure {
+  margin-top: var(--space-8);
 }
 
 .fragment-content {
   font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  color: var(--foreground);
+  line-height: 1.75;
+  color: var(--paper-bone);
+  margin-top: var(--space-12);
 }
 
 .fragment-content :global(p) {
-  margin: 0 0 var(--space-4) 0;
+  margin: 0 0 var(--space-6) 0;
 }
 
 .fragment-content :global(h2) {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  margin: var(--space-8) 0 var(--space-4) 0;
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  margin: var(--space-12) 0 var(--space-4) 0;
 }
 
 .fragment-content :global(ul) {
-  margin: 0 0 var(--space-4) 0;
+  margin: 0 0 var(--space-6) 0;
   padding-left: var(--space-6);
 }
 
@@ -171,7 +109,7 @@ const { Content } = await render(fragment);
   margin-top: var(--space-12);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--foreground);
+  color: var(--paper-bone);
   text-decoration: none;
   transition: opacity var(--duration-base) var(--ease-out);
 }

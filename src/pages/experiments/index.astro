@@ -1,170 +1,119 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection } from 'astro:content';
-import { getEntryPath } from '../../lib/content';
+import { getCollection } from "astro:content";
+import SectionHeader from "../../components/SectionHeader.astro";
 
-const experiments = await getCollection('experiments');
-
-const labs = [
-  { id: 'AI LAB', name: 'AI LAB', desc: 'Building my personal AI system.' },
-  { id: 'COMMERCE LAB', name: 'COMMERCE LAB', desc: 'Building an ecommerce system.' },
-  { id: 'CREATIVE LAB', name: 'CREATIVE LAB', desc: 'Exploring design and creation.' }
-];
+const experiments = await getCollection("experiments");
+const sorted = [...experiments].sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
 ---
 
 <Layout title="EXPERIMENTS | BubbleCrisp" description="Experiment Lab - A record of ongoing projects.">
-  <div class="experiments-page">
-    <div class="page-header">
-      <h1 class="page-title">EXPERIMENTS</h1>
-      <span class="page-subtitle">实验记录</span>
-    </div>
+  <section class="page">
+    <SectionHeader en="EXPERIMENTS · IN PROGRESS" cn="实验记录 · 在制品" count={experiments.length} />
+    <p class="section-intro">
+      Ongoing systems and small tests. The lab stays dim, but active.
+    </p>
+    <div class="section-note">▣ 此处陈列 {experiments.length} 件在制品标本</div>
 
-    <div class="labs-grid">
-      {labs.map((lab) => {
-        const labExperiments = experiments.filter(e => e.data.lab === lab.id);
-        return (
-          <div class="lab-section">
-            <div class="lab-header">
-              <h2 class="lab-name">{lab.name}</h2>
-              <p class="lab-desc">{lab.desc}</p>
-            </div>
-            <div class="experiments-list">
-              {labExperiments.map((exp, i) => (
-                <a href={`/experiments/${getEntryPath(exp)}`} class="experiment-card">
-                  <div class="experiment-meta">
-                    <span class="experiment-id">EXPERIMENT_{String(i + 1).padStart(3, '0')}</span>
-                    <span class="experiment-status">{exp.data.status}</span>
-                  </div>
-                  <h3 class="experiment-title">{exp.data.title}</h3>
-                  <p class="experiment-objective">{exp.data.objective}</p>
-                </a>
-              ))}
-              {labExperiments.length === 0 && (
-                <div class="empty-state">No experiments yet.</div>
-              )}
-            </div>
+    <div class="list">
+      {sorted.map((exp, i) => (
+        <a href={`/experiments/${exp.id.replace(/\.(md|mdx)$/, "")}`} class="exp-item">
+          <div class="exp-head">
+            <div class="exp-id">#{String(experiments.length - i).padStart(4, "0")}</div>
+            <div class="exp-status">STATUS: CRYSTALLIZING</div>
           </div>
-        );
-      })}
+          <div class="exp-title">{exp.data.title}</div>
+          <div class="exp-meta">{exp.data.lab} · {exp.data.pubDate.toISOString().split("T")[0]}</div>
+          <div class="exp-desc">{exp.data.objective}</div>
+        </a>
+      ))}
     </div>
-  </div>
+  </section>
 </Layout>
 
 <style>
-.experiments-page {
-  padding: var(--space-12) 0;
+.page {
+  position: relative;
+  padding: var(--space-16) 0;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: var(--space-16);
+.section-intro {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 var(--space-8) 0;
+  color: var(--paper-rust);
 }
 
-.page-title {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2) 0;
-}
-
-.page-subtitle {
+.section-note {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 var(--space-6) 0;
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--muted);
-  display: block;
+  letter-spacing: 0.05em;
+  color: var(--rock-granite);
 }
 
-.labs-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-}
-
-.lab-section {
-  padding-top: var(--space-8);
-  border-top: 1px solid var(--border);
-}
-
-.lab-header {
-  margin-bottom: var(--space-8);
-}
-
-.lab-name {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin: 0 0 var(--space-2) 0;
-  color: var(--accent);
-}
-
-.lab-desc {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  margin: 0;
-}
-
-.experiments-list {
+.list {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.experiment-card {
+.exp-item {
   display: block;
   padding: var(--space-6);
-  border: 1px solid var(--border);
-  background-color: var(--background-elevated);
+  border: var(--border-solid);
+  background: rgba(10, 10, 12, 0.72);
   text-decoration: none;
-  transition: all var(--duration-base) var(--ease-out);
+  color: var(--paper-bone);
+  transition: opacity var(--duration-base) var(--ease-out);
 }
 
-.experiment-card:hover {
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
+.exp-item:hover {
+  opacity: 0.85;
 }
 
-.experiment-meta {
+.exp-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-3);
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
-.experiment-id {
+.exp-id {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted);
+  color: var(--mineral-copper);
 }
 
-.experiment-status {
+.exp-status {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--accent);
-  border: 1px solid var(--accent-soft);
-  padding: var(--space-1) var(--space-3);
+  color: var(--rock-granite);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.experiment-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  margin: 0 0 var(--space-2) 0;
-  color: var(--foreground);
+.exp-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
 }
 
-.experiment-objective {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  margin: 0;
-  line-height: var(--leading-relaxed);
-}
-
-.empty-state {
+.exp-meta {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted);
-  padding: var(--space-6);
-  border: 1px dashed var(--border);
-  text-align: center;
+  color: var(--rock-granite);
+  margin-top: var(--space-1);
+}
+
+.exp-desc {
+  margin-top: var(--space-3);
+  color: var(--paper-rust);
 }
 </style>

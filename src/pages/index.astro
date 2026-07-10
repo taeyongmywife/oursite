@@ -2,270 +2,171 @@
 import Layout from "../layouts/Layout.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { getCollection } from 'astro:content';
+import RockCard from "../components/RockCard.astro";
 
-const fragments = await getCollection('fragments');
-const experiments = await getCollection('experiments');
+const fragments = await getCollection("fragments");
+const latestFragments = [...fragments].sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
+
+const currentId = String(fragments.length).padStart(4, "0");
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
-<<<<<<< HEAD
-  <p class="label-en">
-    WELCOME
-  </p>
-
-  <div class="title-section">
-    <h1 class="title-zh">
-      你正在进入一个未命名空间
-    </h1>
-    <p class="subtitle-en">
-      Entering an Unnamed Space
-    </p>
-  </div>
-
-  <p class="description">
-    这里是入口页
-  </p>
-</Layout>
-
-<style>
-.label-en {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin: 0;
-}
-
-.title-section {
-  margin-top: var(--space-4);
-  display: flex;
-  flex-direction: column;
-}
-
-.title-zh {
-  font-size: var(--text-4xl);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-tight);
-  margin: 0;
-}
-
-.subtitle-en {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--accent);
-  margin: var(--space-1) 0 0 var(--space-2);
-  letter-spacing: 0.05em;
-}
-
-.description {
-  margin-top: var(--space-6);
-  line-height: var(--leading-relaxed);
-  color: var(--muted);
-}
-=======
   <section class="hero">
-    <div class="hero-label">PERSONAL RESEARCH ARCHIVE</div>
-    <h1 class="hero-title">BubbleCrisp</h1>
-    <p class="hero-description">
-      A personal archive<br />
-      of thoughts,<br />
-      experiments and observations.
-    </p>
-    <a href="/fragments" class="hero-button">[ ENTER ARCHIVE ]</a>
+    <div class="hero-top">
+      <div class="hero-welcome">WELCOME, STRANGER.</div>
+      <div class="hero-id">[SPECIMEN #{currentId}]</div>
+    </div>
+
+    <h1 class="hero-title-cn">你正在进入一个未命名空间</h1>
+    <div class="hero-title-en">Entering an Unnamed Space</div>
+
+    <div class="hero-line"></div>
+
+    <div class="hero-desc">
+      <p>这里存放着持续结晶的想法、观察、产物。</p>
+      <p>Each idea here is a specimen in a cabinet still being built.</p>
+    </div>
+
+    <a class="hero-cta" href="/fragments">[▸ ENTER THE CABINET]</a>
   </section>
 
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">LATEST FRAGMENTS</h2>
-      <span class="section-subtitle">最近碎片</span>
-    </div>
-    <div class="fragments-grid">
-      {fragments.slice(0, 3).map((fragment, i) => (
-        <a href={`/fragments/${fragment.id.replace(/\.(md|mdx)$/, '')}`} class="fragment-card">
-          <div class="fragment-id">FRAGMENT_{String(i + 1).padStart(3, '0')}</div>
-          <h3 class="fragment-title">{fragment.data.title}</h3>
-        </a>
+  <section class="recent">
+    <div class="recent-title">RECENT CRYSTALLIZATION</div>
+    <div class="recent-list">
+      {latestFragments.slice(0, 3).map((fragment, i) => (
+        <RockCard
+          id={String(fragments.length - i)}
+          titleCn={fragment.data.title}
+          titleEn={fragment.data.subject}
+          date={fragment.data.pubDate.toISOString().split("T")[0]}
+          href={`/fragments/${fragment.id.replace(/\.(md|mdx)$/, "")}`}
+        />
       ))}
     </div>
-  </section>
-
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">ACTIVE EXPERIMENTS</h2>
-      <span class="section-subtitle">正在进行</span>
-    </div>
-    <div class="labs-grid">
-      <div class="lab-card">
-        <div class="lab-name">AI LAB</div>
-        <p class="lab-desc">Building my personal AI system.</p>
-      </div>
-      <div class="lab-card">
-        <div class="lab-name">COMMERCE LAB</div>
-        <p class="lab-desc">Building an ecommerce system.</p>
-      </div>
-      <div class="lab-card">
-        <div class="lab-name">CREATIVE LAB</div>
-        <p class="lab-desc">Exploring design and creation.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-header">
-      <h2 class="section-title">THE OBSERVER</h2>
-      <span class="section-subtitle">关于创造者</span>
-    </div>
-    <a href="/identity" class="identity-link">[ VIEW IDENTITY ]</a>
   </section>
 </Layout>
 
 <style>
 .hero {
-  padding: var(--space-20) 0;
-  text-align: center;
+  padding: var(--space-16) 0 var(--space-12) 0;
 }
 
-.hero-label {
-  font-size: var(--text-xs);
-  color: var(--muted);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  margin-bottom: var(--space-6);
-}
-
-.hero-title {
-  font-size: var(--text-4xl);
-  font-weight: var(--font-semibold);
-  margin: 0 0 var(--space-4) 0;
-  letter-spacing: 0.1em;
-}
-
-.hero-description {
-  font-size: var(--text-xl);
-  line-height: var(--leading-relaxed);
-  color: var(--muted);
-  margin: 0 0 var(--space-8) 0;
-}
-
-.hero-button {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--foreground);
-  padding: var(--space-3) var(--space-6);
-  border: 1px solid var(--border);
-  text-decoration: none;
-  transition: all var(--duration-base) var(--ease-out);
-}
-
-.hero-button:hover {
-  border-color: var(--border-hover);
-  background-color: var(--background-elevated);
-}
-
-.section {
-  padding: var(--space-16) 0;
-  border-top: 1px solid var(--border);
-}
-
-.section-header {
+.hero-top {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin-bottom: var(--space-8);
-}
-
-.section-title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin: 0;
-}
-
-.section-subtitle {
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-.fragments-grid {
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: baseline;
   gap: var(--space-4);
 }
 
-.fragment-card {
-  display: block;
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--border);
-  text-decoration: none;
-  transition: opacity var(--duration-base) var(--ease-out);
-}
-
-.fragment-card:hover {
-  opacity: 0.7;
-}
-
-.fragment-id {
+.hero-welcome {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--muted);
-  margin-bottom: var(--space-2);
-}
-
-.fragment-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-normal);
-  margin: 0;
-  color: var(--foreground);
-}
-
-.labs-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-6);
-}
-
-.lab-card {
-  padding: var(--space-6);
-  border: 1px solid var(--border);
-  background-color: var(--background-elevated);
-}
-
-.lab-name {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.1em;
+  color: var(--rock-granite);
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  margin-bottom: var(--space-3);
-  color: var(--accent);
 }
 
-.lab-desc {
-  font-size: var(--text-sm);
-  color: var(--muted);
-  margin: 0;
-  line-height: var(--leading-relaxed);
+.hero-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mineral-copper);
+  letter-spacing: 0.1em;
 }
 
-.identity-link {
-  display: inline-block;
+.hero-title-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-4xl);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: var(--space-6) 0 var(--space-2) 0;
+}
+
+.hero-title-en {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--foreground);
-  text-decoration: none;
-  transition: opacity var(--duration-base) var(--ease-out);
+  color: var(--paper-rust);
+  letter-spacing: 0.1em;
 }
 
-.identity-link:hover {
-  opacity: 0.7;
+.hero-line {
+  height: 1px;
+  background: var(--rock-basalt);
+  margin: var(--space-6) 0;
+}
+
+.hero-desc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--paper-bone);
+}
+
+.hero-desc p {
+  margin: 0;
+}
+
+.hero-cta {
+  display: inline-block;
+  margin-top: var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: var(--paper-bone);
+}
+
+.hero-cta:hover {
+  color: var(--mineral-copper);
+}
+
+.recent {
+  padding: var(--space-12) 0 var(--space-16) 0;
+}
+
+.recent-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--paper-bone);
+  margin-bottom: var(--space-6);
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {
-  .labs-grid {
-    grid-template-columns: 1fr;
+  .hero {
+    padding: var(--space-12) 0;
+  }
+
+  .hero-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .hero-title-cn {
+    font-size: clamp(2rem, 9vw, 2.5rem);
+    margin-top: var(--space-4);
+  }
+
+  .hero-title-en {
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+  }
+
+  .hero-cta {
+    margin-top: var(--space-6);
+    font-size: var(--text-xs);
+  }
+
+  .recent {
+    padding: var(--space-8) 0 var(--space-12) 0;
   }
 }
->>>>>>> e119a38 (update)
 </style>
