@@ -1,61 +1,81 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection, render } from 'astro:content';
-import ChoicePanel from "../../components/ChoicePanel.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
+import BuyButton from "../../components/BuyButton.astro";
+import RelatedReferences from "../../components/RelatedReferences.astro";
 
 export async function getStaticPaths() {
-  const cases = await getCollection('cases');
-  return cases.map((c) => ({
-    params: { slug: c.id.replace(/\.(md|mdx)$/, "") },
+  const products = await getCollection('products');
+  return products.map((p) => ({
+    params: { slug: p.id.replace(/\.(md|mdx)$/, '') },
   }));
 }
 
-const cases = await getCollection('cases');
+const products = await getCollection('products');
 const slug = Astro.params.slug;
-const caseData = cases.find((entry) => entry.id.replace(/\.(md|mdx)$/, "") === slug);
+const product = products.find((entry) => entry.id.replace(/\.(md|mdx)$/, '') === slug);
 
-if (!caseData) {
-  throw new Error(`Case not found for slug: ${slug}`);
+if (!product) {
+  throw new Error(`Product not found for slug: ${slug}`);
 }
 
-const { Content } = await render(caseData);
-const collected = caseData.data.pubDate.toISOString().split("T")[0];
-const sorted = [...cases].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const specimenId = String(sorted.findIndex((entry) => entry.id === caseData.id) + 1).padStart(
-  4,
-  "0",
-);
+const { Content } = await render(product);
+const collected = product.data.pubDate.toISOString().split("T")[0];
+const sortedProducts = [...products].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const specimenId = String(sortedProducts.findIndex((entry) => entry.id === product.id) + 1).padStart(3, "0");
 ---
 
-<Layout title={`${caseData.data.title} | MARKET`} description={caseData.data.title}>
-  <article class="case-detail">
+<Layout title={`${product.data.title} | MARKET`} description={product.data.subject}>
+  <article class="product-detail">
     <SpecimenLabel
       id={specimenId}
-      titleCn={caseData.data.title}
-      titleEn="Market specimen"
+      titleCn={product.data.title}
+      titleEn={product.data.subject}
       collected={collected}
-      location="digital sediment"
-      composition="commerce / experiment"
-      status={caseData.data.status === "Archived" ? "archived" : "crystallizing"}
+      location={`Market · ${product.data.category}`}
+      composition="Product"
+      status={product.data.status === "Available" ? "available" : "coming-soon"}
       variant="full"
     />
 
-    <div class="observation-section">
-      <div class="observation-label">OBSERVATION</div>
-      <p class="observation-text">{caseData.data.observation}</p>
+    {product.data.coverImage && (
+      <div class="product-cover">
+        <img src={product.data.coverImage.src} alt={product.data.title} />
+      </div>
+    )}
+
+    <div class="product-info">
+      {product.data.price && (
+        <div class="product-price">{product.data.price}</div>
+      )}
+      <BuyButton
+        purchaseChannel={product.data.purchaseChannel}
+        externalUrl={product.data.externalUrl}
+      />
     </div>
 
-    <div class="case-content">
+    {product.data.specs && (
+      <div class="specs-section">
+        <div class="specs-title">SPECIFICATIONS</div>
+        <div class="specs-list">
+          {Object.entries(product.data.specs).map(([key, value]) => (
+            <div class="spec-item">
+              <div class="spec-key">{key}</div>
+              <div class="spec-value">{value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div class="product-content">
       <Content />
     </div>
 
-    <ChoicePanel
-      prompt="离开交易抽屉 / Close this drawer"
-      options={[
-        { label: "回到列表", href: "/market" },
-        { label: "进入碎片柜", href: "/fragments" },
-      ]}
+    <RelatedReferences
+      relatedExperiments={product.data.relatedExperiments}
+      relatedFragments={product.data.relatedFragments}
     />
 
     <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
@@ -63,47 +83,94 @@ const specimenId = String(sorted.findIndex((entry) => entry.id === caseData.id) 
 </Layout>
 
 <style>
-.case-detail {
+.product-detail {
   padding: var(--space-16) 0;
   max-width: 680px;
   margin: 0 auto;
 }
 
-.observation-section {
-  margin-bottom: var(--space-8);
-  padding: var(--space-6);
-  border: var(--border-thin);
+.product-cover {
+  margin: var(--space-12) 0;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: var(--border-solid);
   background: var(--bg-shelf);
+  overflow: hidden;
 }
 
-.observation-label {
+.product-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-8) 0;
+  border-top: var(--border-thin);
+  border-bottom: var(--border-thin);
+}
+
+.product-price {
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  color: var(--mineral-copper);
+}
+
+.specs-section {
+  margin: var(--space-12) 0;
+}
+
+.specs-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--paper-bone);
+  margin-bottom: var(--space-6);
+}
+
+.specs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-4) 0;
+  border-bottom: 1px dashed var(--rock-granite);
+}
+
+.spec-key {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--rock-granite);
-  margin-bottom: var(--space-3);
+  text-transform: uppercase;
 }
 
-.observation-text {
+.spec-value {
+  font-family: var(--font-serif);
   font-size: var(--text-base);
   color: var(--paper-bone);
-  margin: 0;
-  line-height: 1.75;
-  font-style: italic;
 }
 
-.case-content {
+.product-content {
   font-size: var(--text-base);
   line-height: 1.75;
   color: var(--paper-bone);
+  margin-top: var(--space-12);
 }
 
-.case-content :global(p) {
+.product-content :global(p) {
   margin: 0 0 var(--space-4) 0;
 }
 
-.case-content :global(h2) {
+.product-content :global(h2) {
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
   margin: var(--space-8) 0 var(--space-4) 0;

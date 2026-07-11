@@ -64,4 +64,32 @@ const blog = defineCollection({
 		}),
 });
 
-export const collections = { fragments, experiments, cases, blog };
+const products = defineCollection({
+	loader: glob({ base: './src/content/products', pattern: '**/*.{md,mdx}' }),
+	schema: ({ image }) =>
+		z.object({
+			title: z.string(),
+			subject: z.string(),
+			category: z.enum(['Tools', 'Knowledge', 'Works']),
+			status: z.enum(['Available', 'Pre-order', 'Sold out']),
+			pubDate: z.coerce.date(),
+			updatedDate: z.coerce.date().optional(),
+			coverImage: z.optional(image()),
+			price: z.string().optional(),
+			purchaseChannel: z.enum(['External', 'Internal', 'Coming soon']).default('Coming soon'),
+			externalUrl: z.string().optional(),
+			specs: z.object({
+				material: z.string().optional(),
+				dimensions: z.string().optional(),
+				weight: z.string().optional(),
+				edition: z.string().optional(),
+			}).optional(),
+			relatedExperiments: z.array(z.string()).optional().default([]),
+			relatedFragments: z.array(z.string()).optional().default([]),
+			featured: z.boolean().optional().default(false),
+			cmsManaged: z.boolean().optional().default(false),
+			stock: z.number().optional(),
+		}),
+});
+
+export const collections = { fragments, experiments, cases, blog, products };

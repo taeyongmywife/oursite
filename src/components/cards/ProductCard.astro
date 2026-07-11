@@ -1,42 +1,100 @@
 ---
-import BaseCard from './BaseCard.astro';
-
 interface Props {
+  id: string;
   href: string;
-  title: string;
-  description?: string;
-  price: string;
-  tags?: string[];
+  titleCn: string;
+  titleEn: string;
+  status: string;
+  price?: string;
+  coverImage?: ImageMetadata;
 }
 
-const { href, title, description, price, tags } = Astro.props;
+const { id, href, titleCn, titleEn, status, price, coverImage } = Astro.props;
 ---
 
-<BaseCard href={href}>
-  <div class="product-card">
-    <div class="flex justify-between items-start">
-      <h3 class="card-title">{title}</h3>
-      <p class="card-price">{price}</p>
-    </div>
-    
-    {description && (
-      <p class="card-description">{description}</p>
-    )}
-    
-    {tags && tags.length > 0 && (
-      <div class="tags flex gap-2">
-        {tags.map(tag => (
-          <span class="card-tag">{tag}</span>
-        ))}
-      </div>
+<a href={href} class="product-card">
+  <div class="product-cover">
+    {coverImage && (
+      <img src={coverImage.src} alt={titleCn} class="product-image" />
     )}
   </div>
-</BaseCard>
+  <div class="product-content">
+    <h3 class="product-title">{titleCn}</h3>
+    <div class="product-subject">{titleEn}</div>
+    {price && <div class="product-meta">
+      <span class="product-price">{price}</span>
+    </div>}
+  </div>
+</a>
 
 <style>
 .product-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  height: 100%;
+  border: var(--border-thin);
+  background: var(--bg-shelf);
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+  overflow: hidden;
+}
+
+.product-card:hover {
+  border-color: var(--mineral-copper);
+}
+
+.product-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--bg-display);
+  overflow: hidden;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-content {
+  padding: var(--space-4);
+  display: grid;
+  grid-template-rows: 3.2em 3.9em 1fr 1.8em;
+  row-gap: var(--space-2);
+  flex: 1;
+}
+
+.product-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  color: var(--paper-bone);
+  margin: 0;
+  line-height: 1.2;
+  align-self: start;
+  overflow: hidden;
+}
+
+.product-subject {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--paper-rust);
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  align-self: start;
+  overflow: hidden;
+}
+
+.product-meta {
+  display: flex;
+  align-items: flex-start;
+  grid-row: 4;
+  align-self: end;
+}
+
+.product-price {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--mineral-copper);
+  line-height: 1;
 }
 </style>

@@ -1,0 +1,144 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Reference {
+  type: 'experiment' | 'fragment';
+  id: string;
+  title: string;
+  date: string;
+  href: string;
+}
+
+interface Props {
+  relatedExperiments?: string[];
+  relatedFragments?: string[];
+}
+
+const { relatedExperiments = [], relatedFragments = [] } = Astro.props;
+
+const [experiments, fragments] = await Promise.all([
+  getCollection('experiments'),
+  getCollection('fragments'),
+]);
+
+const references: Reference[] = [];
+
+// Add related experiments
+relatedExperiments.forEach((expId) => {
+  const exp = experiments.find((e) => e.id.replace(/\.(md|mdx)$/, "") === expId);
+  if (exp) {
+    references.push({
+      type: 'experiment',
+      id: expId,
+      title: exp.data.title,
+      date: exp.data.pubDate.toISOString().split('T')[0],
+      href: `/experiments/${expId}`,
+    });
+  }
+});
+
+// Add related fragments
+relatedFragments.forEach((fragId) => {
+  const frag = fragments.find((f) => f.id.replace(/\.(md|mdx)$/, "") === fragId);
+  if (frag) {
+    references.push({
+      type: 'fragment',
+      id: fragId,
+      title: frag.data.title,
+      date: frag.data.pubDate.toISOString().split('T')[0],
+      href: `/fragments/${fragId}`,
+    });
+  }
+});
+---
+
+{references.length > 0 && (
+  <section class="related-references">
+    <div class="related-line"></div>
+    <div class="related-header">
+      <div class="related-title-en">FROM THE CABINET</div>
+      <div class="related-title-cn">本商品基于以下实验或碎片</div>
+    </div>
+    <div class="related-list">
+      {references.map((ref) => (
+        <a href={ref.href} class="related-item">
+          <div class="related-type">{ref.type.toUpperCase()}</div>
+          <div class="related-title">{ref.title}</div>
+          <div class="related-date">{ref.date}</div>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+.related-references {
+  margin-top: var(--space-16);
+}
+
+.related-line {
+  height: 1px;
+  background: var(--rock-granite);
+  margin-bottom: var(--space-8);
+}
+
+.related-header {
+  margin-bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.related-title-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.15em;
+  color: var(--rock-granite);
+  text-transform: uppercase;
+}
+
+.related-title-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--paper-bone);
+}
+
+.related-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.related-item {
+  display: block;
+  padding: var(--space-4) var(--space-6);
+  border: var(--border-thin);
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.related-item:hover {
+  border-color: var(--mineral-copper);
+}
+
+.related-type {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mineral-copper);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-1);
+}
+
+.related-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--paper-bone);
+}
+
+.related-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  margin-top: var(--space-2);
+}
+</style>

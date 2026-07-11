@@ -1,0 +1,45 @@
+---
+interface Props {
+  purchaseChannel: 'External' | 'Internal' | 'Coming soon';
+  externalUrl?: string;
+}
+
+const { purchaseChannel, externalUrl } = Astro.props;
+const isDisabled = purchaseChannel === 'Coming soon' || purchaseChannel === 'Internal';
+---
+
+{purchaseChannel === 'External' && externalUrl ? (
+  <a href={externalUrl} target="_blank" rel="noopener noreferrer" class="buy-button">
+    [ 购买 ]
+  </a>
+) : (
+  <span class="buy-button buy-button-disabled" aria-disabled="true">
+    [ 即将开放 ]
+  </span>
+)}
+
+<style>
+.buy-button {
+  display: inline-block;
+  padding: var(--space-4) var(--space-8);
+  border: 2px solid var(--mineral-copper);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  color: var(--mineral-copper);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.buy-button:hover:not(.buy-button-disabled) {
+  background: var(--mineral-copper);
+  color: var(--bg-void);
+}
+
+.buy-button-disabled {
+  border-color: var(--rock-granite);
+  color: var(--rock-granite);
+  cursor: not-allowed;
+}
+</style>

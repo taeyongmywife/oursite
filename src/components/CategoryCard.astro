@@ -1,0 +1,216 @@
+---
+interface Props {
+  id: string;
+  titleCn: string;
+  titleEn: string;
+  description: string;
+  descriptionEn?: string;
+  count: number;
+  unit: string;
+  category: 'Tools' | 'Knowledge' | 'Works';
+  href: string;
+}
+
+const { id, titleCn, titleEn, description, descriptionEn, count, unit, category, href } = Astro.props;
+
+// Category icons: Unified flat/2D minimalist style
+const icons = {
+  Tools: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20industrial%20gear%20technical%20drawing%20white%20lines%20on%20black%20background&image_size=square',
+  Knowledge: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20archival%20document%20scroll%20white%20lines%20on%20black%20background&image_size=square',
+  Works: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20framed%20art%20specimen%20white%20lines%20on%20black%20background&image_size=square'
+};
+---
+
+<a href={href} class={`category-card category-${category.toLowerCase()}`}>
+  <div class="card-inner">
+    <!-- Default Layer: Refined Title -->
+    <div class="layer-default">
+      <div class="title-main">{titleCn}</div>
+      <div class="title-sub">{titleEn}</div>
+    </div>
+
+    <!-- Hover Layer: Description (Top) + Icon (Bottom) -->
+    <div class="layer-hover">
+      <div class="hover-header">
+        <div class="card-id">#{id}</div>
+        <div class="card-count">{count} {unit}</div>
+      </div>
+      
+      <div class="desc-container">
+        <p class="desc-cn">{description}</p>
+        {descriptionEn && <p class="desc-en">{descriptionEn}</p>}
+      </div>
+
+      <div class="icon-container">
+        <img src={icons[category]} alt={category} class="category-icon" />
+      </div>
+    </div>
+  </div>
+</a>
+
+<style>
+.category-card {
+  display: block;
+  position: relative;
+  min-height: 320px; /* Fixed absolute height to ensure all content fits */
+  border: var(--border-thin);
+  background: var(--bg-shelf);
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+  overflow: hidden;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Default Layer Styles */
+.layer-default {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all var(--duration-base) var(--ease-out);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.title-main {
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl); /* Reduced from 4xl */
+  color: var(--paper-bone);
+  letter-spacing: 0.1em;
+}
+
+.title-sub {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--rock-granite);
+  margin-top: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* Hover Layer Styles */
+.layer-hover {
+  position: absolute;
+  inset: 0;
+  padding: var(--space-6); /* Slightly more compact padding */
+  display: flex;
+  flex-direction: column;
+  transition: all var(--duration-base) var(--ease-out);
+  opacity: 0;
+  transform: translateY(10px);
+  background: var(--bg-shelf);
+}
+
+.hover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.card-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mineral-copper);
+}
+
+.card-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+}
+
+.icon-container {
+  flex: 0 0 150px; /* Larger fixed height for icon area */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.category-icon {
+  width: 160px; /* Significantly larger icon */
+  height: 160px;
+  opacity: 0.8;
+  filter: grayscale(1);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.desc-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.desc-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-sm); /* Reduced from base */
+  color: var(--paper-bone);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.desc-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--paper-rust);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Hover States */
+.category-card:hover {
+  border-color: var(--mineral-copper);
+}
+
+.category-card:hover .layer-default {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.category-card:hover .layer-hover {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.category-card:hover .category-icon {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+/* Category Specific Styles - Simplified */
+.category-tools:hover .category-icon {
+  filter: brightness(1.2);
+}
+
+.category-knowledge:hover .category-icon {
+  filter: brightness(1.2);
+}
+
+.category-works:hover .category-icon {
+  filter: brightness(1.2);
+}
+
+@media (max-width: 768px) {
+  .title-main {
+    font-size: var(--text-2xl);
+  }
+  
+  .layer-hover {
+    padding: var(--space-6);
+  }
+  
+  .category-icon {
+    width: 60px;
+    height: 60px;
+  }
+}
+</style>

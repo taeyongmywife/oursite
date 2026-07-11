@@ -2,33 +2,91 @@
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
 import SectionHeader from "../../components/SectionHeader.astro";
+import CategoryCard from "../../components/CategoryCard.astro";
+import ProductCard from "../../components/cards/ProductCard.astro";
 
-const cases = await getCollection("cases");
-const sorted = [...cases].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const products = await getCollection("products");
+const sortedProducts = [...products].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// Count products by category
+const toolsCount = products.filter(p => p.data.category === 'Tools').length;
+const knowledgeCount = products.filter(p => p.data.category === 'Knowledge').length;
+const worksCount = products.filter(p => p.data.category === 'Works').length;
+
+const categories = [
+  {
+    id: '001',
+    titleCn: '工具',
+    titleEn: 'Tools',
+    description: '精心选品的数字硬件与生产力工具',
+    descriptionEn: 'Curated digital hardware & productivity tools',
+    count: toolsCount,
+    unit: '件',
+    category: 'Tools',
+    href: '/market/tools',
+  },
+  {
+    id: '002',
+    titleCn: '知识',
+    titleEn: 'Knowledge',
+    description: '深度思考和知识沉淀',
+    descriptionEn: 'Deep thinking and knowledge crystallization',
+    count: knowledgeCount,
+    unit: '卷',
+    category: 'Knowledge',
+    href: '/market/knowledge',
+  },
+  {
+    id: '003',
+    titleCn: '作品',
+    titleEn: 'Works',
+    description: '创意作品和数字艺术品',
+    descriptionEn: 'Creative projects and digital artifacts',
+    count: worksCount,
+    unit: '帧',
+    category: 'Works',
+    href: '/market/works',
+  },
+];
+
+// Get featured products (latest 5, single row)
+const featuredProducts = sortedProducts.slice(0, 5);
 ---
 
-<Layout title="MARKET | BubbleCrisp" description="Market Lab - A record of business experiments.">
+<Layout title="MARKET | BubbleCrisp" description="Market - 安静的策展商店">
   <section class="page">
-    <SectionHeader en="MARKET" cn="商业实验" count={cases.length} />
-    <p class="section-intro">
-      This is the only drawer allowed to feel slightly transactional. Still: quiet, numbered,
-      and filed.
-    </p>
+    <SectionHeader en="MARKET" cn="策展商店" count={products.length} />
+    
+    <!-- Visual Center: Categories -->
+    <div class="categories-section">
+      <div class="categories-grid">
+        {categories.map((cat) => (
+          <CategoryCard {...cat} />
+        ))}
+      </div>
+    </div>
 
-    <div class="list">
-      {sorted.map((c, i) => (
-        <a href={`/market/${c.id.replace(/\.(md|mdx)$/, "")}`} class="market-item">
-          <div class="market-head">
-            <div class="market-id">#{String(cases.length - i).padStart(4, "0")}</div>
-            <div class="market-status">{c.data.status}</div>
+    <!-- Minimalist Section: Recently Added -->
+    <div class="recent-section">
+      <div class="recent-header">
+        <div class="recent-title">RECENTLY ADDED</div>
+        <div class="recent-line"></div>
+      </div>
+      <div class="products-row">
+        {featuredProducts.map((product, index) => (
+          <div class="product-item">
+            <ProductCard
+              id={String(sortedProducts.length - index).padStart(3, '0')}
+              href={`/market/${product.id.replace(/\.(md|mdx)$/, '')}`}
+              titleCn={product.data.title}
+              titleEn={product.data.subject}
+              status={product.data.status}
+              price={product.data.price}
+              coverImage={product.data.coverImage}
+            />
           </div>
-          <div class="market-title">{c.data.title}</div>
-          <div class="market-desc">{c.data.observation}</div>
-          <div class="market-meta">{c.data.pubDate.toISOString().split("T")[0]}</div>
-        </a>
-      ))}
-
-      {cases.length === 0 && <div class="empty-state">No market experiments yet.</div>}
+        ))}
+      </div>
     </div>
   </section>
 </Layout>
@@ -36,78 +94,106 @@ const sorted = [...cases].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDa
 <style>
 .page {
   padding: var(--space-16) 0;
-}
-
-.section-intro {
-  margin: 0 0 var(--space-8) 0;
-  color: var(--paper-rust);
-}
-
-.list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-24);
 }
 
-.market-item {
-  display: block;
-  padding: var(--space-6);
-  border: var(--border-solid);
-  background: rgba(10, 10, 12, 0.72);
-  text-decoration: none;
-  transition: opacity var(--duration-base) var(--ease-out);
+/* Categories Section - Refined Size */
+.categories-section {
+  width: 100%;
+  max-width: 900px; /* Limit max width to reduce size on large screens */
+  margin: 0 auto;
 }
 
-.market-item:hover {
-  opacity: 0.85;
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4); /* Reduced gap */
 }
 
-.market-head {
+/* Recent Section - Subordinate & Horizontal */
+.recent-section {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.recent-header {
+  display: flex;
+  align-items: center;
   gap: var(--space-4);
-  margin-bottom: var(--space-2);
 }
 
-.market-id {
+.recent-title {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--mineral-copper);
-  letter-spacing: 0.05em;
-}
-
-.market-status {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--rock-granite);
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.market-title {
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
-  color: var(--mineral-copper);
-}
-
-.market-desc {
-  margin-top: var(--space-3);
-  color: var(--paper-bone);
-}
-
-.market-meta {
-  margin-top: var(--space-3);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
   color: var(--rock-granite);
+  white-space: nowrap;
 }
 
-.empty-state {
-  font-family: var(--font-mono);
+.recent-line {
+  flex: 1;
+  height: 1px;
+  background: var(--rock-basalt);
+}
+
+.products-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)); /* Force equal width even with long text */
+  gap: var(--space-4);
+}
+
+.product-item {
+  width: 100%;
+  display: flex; /* Ensure the item stretches vertically */
+}
+
+/* Override ProductCard styles for small size in row */
+.product-item :global(.product-content) {
+  padding: var(--space-3);
+  grid-template-rows: 2.4em 3.3em 1fr 1.2em;
+  row-gap: var(--space-2);
+}
+
+.product-item :global(.product-title) {
+  font-size: var(--text-sm);
+  line-height: 1.2;
+}
+
+.product-item :global(.product-subject) {
   font-size: var(--text-xs);
-  color: var(--rock-granite);
-  padding: var(--space-12) 0;
-  text-align: center;
+  line-height: 1.2;
+}
+
+.product-item :global(.product-price) {
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+@media (max-width: 1024px) {
+  .categories-grid {
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    gap: var(--space-16);
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .products-row {
+    gap: var(--space-2); /* Even tighter gap for mobile to fit 5 */
+  }
+
+  .product-item :global(.product-title) {
+    font-size: var(--text-xs); /* Scale down font for mobile */
+  }
 }
 </style>

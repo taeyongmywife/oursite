@@ -1,0 +1,84 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import SectionHeader from "../../components/SectionHeader.astro";
+import ProductCard from "../../components/cards/ProductCard.astro";
+
+const products = await getCollection("products");
+const worksProducts = products
+  .filter(p => p.data.category === 'Works')
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<Layout title="WORKS | Market" description="Market - Works">
+  <section class="page">
+    <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
+    <SectionHeader en="WORKS" cn="作品" count={worksProducts.length} />
+    <p class="section-intro">
+      创意作品和数字艺术品。
+    </p>
+
+    <div class="products-grid">
+      {worksProducts.map((product, index) => (
+        <ProductCard
+          id={String(worksProducts.length - index).padStart(3, '0')}
+          href={`/market/${product.id.replace(/\.(md|mdx)$/, '')}`}
+          titleCn={product.data.title}
+          titleEn={product.data.subject}
+          status={product.data.status}
+          price={product.data.price}
+          coverImage={product.data.coverImage}
+        />
+      ))}
+
+      {worksProducts.length === 0 && (
+        <div class="empty-state">No works yet.</div>
+      )}
+    </div>
+  </section>
+</Layout>
+
+<style>
+.page {
+  padding: var(--space-16) 0;
+}
+
+.back-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--paper-bone);
+  text-decoration: none;
+  margin-bottom: var(--space-8);
+}
+
+.back-link:hover {
+  color: var(--mineral-copper);
+}
+
+.section-intro {
+  margin: 0 0 var(--space-8) 0;
+  color: var(--paper-rust);
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.empty-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  padding: var(--space-12) 0;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
