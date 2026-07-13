@@ -17,6 +17,9 @@ const currentId = String(fragments.length).padStart(4, "0");
     <span>当前标本：#{currentId}</span>
     <span>采集地：digital sediment</span>
   </div>
+  <div class="footer-between">
+    Everything happens <a href="/between" class="footer-between-link">between</a>.
+  </div>
   <div class="footer-motto">"I crystallize, therefore I am."</div>
 </footer>
 <style>
@@ -38,6 +41,20 @@ const currentId = String(fragments.length).padStart(4, "0");
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-6);
   margin-bottom: var(--space-4);
+}
+
+.footer-between {
+  margin-bottom: var(--space-4);
+}
+
+.footer-between-link {
+  color: var(--mineral-copper);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.footer-between-link:hover {
+  opacity: 0.7;
 }
 
 .footer-motto {

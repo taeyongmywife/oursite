@@ -1,0 +1,346 @@
+---
+import { getCollection } from "astro:content";
+import "../styles/tokens.css";
+import "../styles/fonts.css";
+import "../styles/base.css";
+
+const entries = (await getCollection("between")).filter(
+  (entry) => !entry.data.hidden && (entry.data.weight ?? 1) > 0,
+);
+
+const total = entries.length;
+const pageTitle = "between | BubbleCrisp";
+const pageDescription = "BubbleCrisp 的潜意识层。";
+const siteUrl = "https://oursite-delta.vercel.app";
+const canonicalURL = new URL("/between", siteUrl);
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL.href} />
+    <meta name="description" content={pageDescription} />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{pageTitle}</title>
+  </head>
+  <body class="between-page">
+    <main class="between-shell" data-between data-total={total}>
+      <div class="between-stamp" data-between-stamp></div>
+      <div class="between-mark">between</div>
+      <div class="between-content" data-between-content></div>
+      <div class="between-divider" aria-hidden="true"></div>
+      <div class="between-actions">
+        <button class="stay-button" type="button" data-stay hidden>
+          <span class="cn">留在这里</span>
+          <span class="sep"> / </span>
+          <span class="en">stay</span>
+        </button>
+        <a class="home-button" href="/" data-home hidden>
+          <span class="cn">回到水面</span>
+          <span class="sep"> / </span>
+          <span class="en">home</span>
+        </a>
+      </div>
+    </main>
+
+    <footer class="between-footer">
+      Everything happens <a href="/between" class="between-footer-link">between</a>.
+    </footer>
+
+    <script is:inline>
+      const root = document.querySelector("[data-between]");
+      const stamp = document.querySelector("[data-between-stamp]");
+      const content = document.querySelector("[data-between-content]");
+      const stayButton = document.querySelector("[data-stay]");
+      const homeButton = document.querySelector("[data-home]");
+
+      const setStayLabel = (button, cn, en) => {
+        button.innerHTML = "";
+
+        const cnNode = document.createElement("span");
+        cnNode.className = "cn";
+        cnNode.textContent = cn;
+
+        const sepNode = document.createElement("span");
+        sepNode.className = "sep";
+        sepNode.textContent = " / ";
+
+        const enNode = document.createElement("span");
+        enNode.className = "en";
+        enNode.textContent = en;
+
+        button.append(cnNode, sepNode, enNode);
+      };
+
+      const attachStayButton = (button) => {
+        if (!button || button.dataset.bound === "true") {
+          return;
+        }
+
+        button.hidden = false;
+        button.dataset.bound = "true";
+
+        button.addEventListener("click", () => {
+          if (button.dataset.completed === "true") {
+            return;
+          }
+
+          button.dataset.completed = "true";
+          button.style.transition = "opacity 600ms cubic-bezier(0.16, 1, 0.3, 1)";
+          button.style.opacity = "0";
+
+          window.setTimeout(() => {
+            setStayLabel(button, "谢谢。", "Thank you.");
+            button.style.opacity = "1";
+
+            window.setTimeout(() => {
+              button.style.transition = "opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1)";
+              button.style.opacity = "0";
+              button.style.pointerEvents = "none";
+            }, 2000);
+          }, 600);
+        });
+      };
+
+      const renderEntry = (entry) => {
+        if (!stamp || !content || !stayButton || !homeButton) {
+          return;
+        }
+
+        stamp.textContent = entry.createdAt;
+        content.innerHTML = "";
+
+        const fragments = entry.body.split(/\r?\n\s*\r?\n/g).filter(Boolean);
+
+        fragments.forEach((fragment) => {
+          const paragraph = document.createElement("p");
+          paragraph.textContent = fragment;
+          content.appendChild(paragraph);
+        });
+
+        setStayLabel(stayButton, "留在这里", "stay");
+        stayButton.style.opacity = "1";
+        stayButton.style.pointerEvents = "auto";
+        stayButton.style.transition = "color var(--duration-base) var(--ease-out)";
+        stayButton.dataset.completed = "false";
+        attachStayButton(stayButton);
+        homeButton.hidden = false;
+      };
+
+      const renderEmpty = () => {
+        if (!content) {
+          return;
+        }
+
+        content.innerHTML = "";
+        const paragraph = document.createElement("p");
+        paragraph.textContent = "此刻没有任何纸页被留下。";
+        content.appendChild(paragraph);
+
+        if (homeButton) {
+          homeButton.hidden = false;
+        }
+      };
+
+      const fetchEntry = (index, total, retries) => {
+        fetch(`/between/entries/${index}.json`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to load between entry.");
+            }
+
+            return response.json();
+          })
+          .then((entry) => {
+            renderEntry(entry);
+          })
+          .catch(() => {
+            if (retries > 0) {
+              const nextIndex = (index + 1) % total;
+              window.setTimeout(() => fetchEntry(nextIndex, total, retries - 1), 300);
+            } else {
+              renderEmpty();
+            }
+          });
+      };
+
+      if (root) {
+        const total = Number.parseInt(root.dataset.total ?? "0", 10);
+
+        if (!Number.isFinite(total) || total <= 0) {
+          renderEmpty();
+        } else {
+          const index = Math.floor(Math.random() * total);
+          fetchEntry(index, total, 2);
+        }
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+.between-page {
+  min-height: 100vh;
+}
+
+.between-shell {
+  position: relative;
+  width: min(100%, 640px);
+  min-height: calc(100vh - 8vh);
+  margin: 0 auto;
+  padding: 12vh 0 8vh;
+  text-align: center;
+}
+
+.between-stamp {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.08em;
+}
+
+.between-mark {
+  margin-bottom: var(--space-16);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.between-content {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 2;
+  color: var(--paper-bone);
+}
+
+.between-content :global(p),
+.between-content p {
+  margin: 0 0 var(--space-6) 0;
+  white-space: pre-wrap;
+}
+
+.between-divider {
+  width: 100%;
+  margin-top: var(--space-24);
+  border-top: 1px solid var(--rock-basalt);
+}
+
+.between-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--space-16);
+}
+
+.stay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-6);
+  background: transparent;
+  border: 0;
+  color: var(--paper-bone);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.home-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  color: var(--rock-granite);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  transition: color var(--duration-base) var(--ease-out);
+}
+
+.home-button .cn {
+  color: var(--rock-granite);
+}
+
+.home-button .en {
+  color: var(--rock-basalt);
+}
+
+.home-button .sep {
+  margin: 0 0.4em;
+  color: var(--rock-basalt);
+}
+
+.home-button:hover .cn,
+.home-button:hover .en {
+  color: var(--mineral-copper);
+}
+
+.home-button:focus-visible {
+  outline: 1px solid var(--mineral-copper);
+  outline-offset: 4px;
+}
+
+.stay-button .cn {
+  color: var(--paper-bone);
+}
+
+.stay-button .en {
+  color: var(--rock-granite);
+}
+
+.stay-button .sep {
+  margin: 0 0.4em;
+  color: var(--rock-basalt);
+}
+
+.stay-button:hover .cn,
+.stay-button:hover .en {
+  color: var(--mineral-copper);
+}
+
+.stay-button:focus-visible {
+  outline: 1px solid var(--mineral-copper);
+  outline-offset: 4px;
+}
+
+.between-footer {
+  padding: 0 0 6vh;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  text-align: center;
+}
+
+.between-footer-link {
+  color: var(--paper-bone);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .between-shell {
+    width: 100%;
+    padding: 8vh var(--space-4) 6vh;
+  }
+
+  .between-stamp {
+    top: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .between-mark {
+    margin-bottom: var(--space-12);
+  }
+}
+</style>

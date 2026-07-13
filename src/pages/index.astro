@@ -30,6 +30,7 @@ const currentId = String(fragments.length).padStart(4, "0");
     </div>
 
     <a class="hero-cta" href="/fragments">[▸ ENTER THE CABINET]</a>
+    <a href="/between" class="between-easter-egg" aria-label="between">between</a>
   </section>
 
   <section class="recent">
@@ -50,6 +51,7 @@ const currentId = String(fragments.length).padStart(4, "0");
 
 <style>
 .hero {
+  position: relative;
   padding: var(--space-16) 0 var(--space-12) 0;
 }
 
@@ -121,6 +123,25 @@ const currentId = String(fragments.length).padStart(4, "0");
   color: var(--mineral-copper);
 }
 
+.between-easter-egg {
+  position: absolute;
+  right: var(--space-8);
+  bottom: var(--space-8);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-basalt);
+  text-decoration: none;
+  letter-spacing: 0.2em;
+  transition:
+    color 800ms var(--ease-out),
+    letter-spacing 800ms var(--ease-out);
+}
+
+.between-easter-egg:hover {
+  color: var(--mineral-copper);
+  letter-spacing: 0.3em;
+}
+
 .recent {
   padding: var(--space-12) 0 var(--space-16) 0;
 }
@@ -163,6 +184,11 @@ const currentId = String(fragments.length).padStart(4, "0");
   .hero-cta {
     margin-top: var(--space-6);
     font-size: var(--text-xs);
+  }
+
+  .between-easter-egg {
+    right: 0;
+    bottom: 0;
   }
 
   .recent {

@@ -92,4 +92,15 @@ const products = defineCollection({
 		}),
 });
 
-export const collections = { fragments, experiments, cases, blog, products };
+const between = defineCollection({
+	loader: glob({ base: './src/content/between', pattern: '**/*.{md,mdx}' }),
+	schema: () =>
+		z.object({
+			createdAt: z.coerce.date(),
+			keywords: z.array(z.string()).optional().default([]),
+			weight: z.number().optional().default(1),
+			hidden: z.boolean().optional().default(false),
+		}),
+});
+
+export const collections = { fragments, experiments, cases, blog, products, between };

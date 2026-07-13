@@ -57,6 +57,11 @@ const heroAlt = fragment.data.heroImage
 
     <div class="fragment-content">
       <Content />
+      {fragment.id === "groove.md" && (
+        <p class="between-whisper">
+          那之后我没有再说话。<a href="/between" class="inline-between">between</a>
+        </p>
+      )}
     </div>
 
     <ChoicePanel
@@ -102,6 +107,22 @@ const heroAlt = fragment.data.heroImage
 .fragment-content :global(ul) {
   margin: 0 0 var(--space-6) 0;
   padding-left: var(--space-6);
+}
+
+.between-whisper {
+  margin: 0 0 var(--space-6) 0;
+}
+
+.inline-between {
+  margin-left: 0.25em;
+  color: var(--paper-bone);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--rock-granite);
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+
+.inline-between:hover {
+  border-bottom-color: var(--mineral-copper);
 }
 
 .back-link {
