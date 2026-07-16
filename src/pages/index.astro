@@ -4,6 +4,13 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { getCollection } from 'astro:content';
 import RockCard from "../components/RockCard.astro";
 
+const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
+
+
+
+console.log(import.meta.env);
+
+
 const fragments = await getCollection("fragments");
 const latestFragments = [...fragments].sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
