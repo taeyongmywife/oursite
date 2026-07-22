@@ -1,0 +1,223 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import RichText from "../../components/RichText.astro";
+import { getKnowledgeBySlug } from "../../lib/payload";
+
+export async function getStaticPaths() {
+  const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
+  let entries: Array<{ slug: string }> = [];
+
+  try {
+    const res = await fetch(`${payloadUrl}/api/knowledge-index?limit=100&depth=0`);
+    if (res.ok) {
+      const { docs } = await res.json();
+      entries = docs.filter((d: Record<string, unknown>) => d.slug);
+    }
+  } catch {
+    // Payload offline — empty paths, page won't generate
+  }
+
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+  }));
+}
+
+const entry = await getKnowledgeBySlug(Astro.params.slug);
+
+if (!entry) {
+  throw new Error(`Knowledge entry not found for slug: ${Astro.params.slug}`);
+}
+
+const term = entry.term as string;
+const summary = entry.summary as string | null;
+const relatedTerms = entry.relatedTerms as Array<{ term: string; slug: string }> | null;
+---
+
+<Layout title={`${term} | KNOWLEDGE`} description={summary ?? term}>
+  <article class="knowledge-detail">
+    <div class="knowledge-head">
+      <div class="knowledge-label">KNOWLEDGE INDEX</div>
+      <h1 class="knowledge-term">{term}</h1>
+    </div>
+
+    {summary && (
+      <div class="knowledge-summary">
+        <p>{summary}</p>
+      </div>
+    )}
+
+    {entry.content && (
+      <div class="knowledge-content">
+        <RichText content={entry.content as { root: unknown }} />
+      </div>
+    )}
+
+    {relatedTerms && relatedTerms.length > 0 && (
+      <div class="knowledge-related">
+        <div class="related-title">RELATED TERMS</div>
+        <div class="related-list">
+          {relatedTerms.map((rel) => {
+            const relSlug = typeof rel === "object" ? rel.slug : String(rel);
+            const relTerm = typeof rel === "object" ? rel.term : relSlug;
+            return (
+              <a href={`/knowledge/${relSlug}`} class="related-tag">{relTerm}</a>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    <a href="/" class="back-link">[ BACK ]</a>
+  </article>
+</Layout>
+
+<style>
+.knowledge-detail {
+  padding: var(--space-16) 0;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.knowledge-head {
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--rock-basalt);
+}
+
+.knowledge-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: var(--rock-granite);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.knowledge-term {
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  color: var(--paper-bone);
+  margin: 0;
+}
+
+.knowledge-summary {
+  font-size: var(--text-base);
+  line-height: 1.75;
+  color: var(--paper-rust);
+  margin: 0 0 var(--space-8) 0;
+  padding: var(--space-4) var(--space-6);
+  border-left: 2px solid var(--mineral-copper);
+  background: var(--bg-shelf);
+}
+
+.knowledge-summary p {
+  margin: 0;
+}
+
+.knowledge-content {
+  font-size: var(--text-base);
+  line-height: 1.75;
+  color: var(--paper-bone);
+}
+
+.knowledge-content :global(p) {
+  margin: 0 0 var(--space-4) 0;
+}
+
+.knowledge-content :global(h2) {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  margin: var(--space-8) 0 var(--space-4) 0;
+  color: var(--paper-bone);
+}
+
+.knowledge-content :global(ul) {
+  margin: 0 0 var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.knowledge-content :global(blockquote) {
+  margin: var(--space-6) 0;
+  padding: var(--space-3) var(--space-5);
+  border-left: 2px solid var(--mineral-copper);
+  background: var(--bg-shelf);
+  color: var(--paper-rust);
+}
+
+.knowledge-content :global(pre) {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: var(--space-4);
+  background: var(--bg-shelf);
+  border: var(--border-thin);
+  margin: var(--space-4) 0;
+}
+
+.knowledge-content :global(code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.knowledge-content :global(a) {
+  color: var(--mineral-copper);
+  text-decoration: none;
+}
+
+.knowledge-content :global(a:hover) {
+  text-decoration: underline;
+}
+
+.knowledge-related {
+  margin-top: var(--space-12);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--rock-basalt);
+}
+
+.related-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: var(--rock-granite);
+  text-transform: uppercase;
+  margin-bottom: var(--space-4);
+}
+
+.related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.related-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--paper-bone);
+  border: var(--border-solid);
+  padding: var(--space-1) var(--space-3);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+}
+
+.related-tag:hover {
+  border-color: var(--mineral-copper);
+  color: var(--mineral-copper);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: var(--space-12);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--paper-bone);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.back-link:hover {
+  opacity: 0.7;
+}
+</style>

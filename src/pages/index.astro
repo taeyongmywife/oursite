@@ -5,11 +5,19 @@ import { getCollection } from 'astro:content';
 import RockCard from "../components/RockCard.astro";
 
 const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
+let posts = [];
 
-
-
-console.log(import.meta.env);
-
+try {
+  const res = await fetch(`${payloadUrl}/api/posts`);
+  if (res.ok) {
+    const data = await res.json();
+    posts = data.docs ?? [];
+  } else {
+    console.warn(`[home] Posts fetch returned ${res.status}`);
+  }
+} catch (err) {
+  console.warn(`[home] Failed to fetch posts: ${err}`);
+}
 
 const fragments = await getCollection("fragments");
 const latestFragments = [...fragments].sort(
@@ -42,17 +50,14 @@ const currentId = String(fragments.length).padStart(4, "0");
 
   <section class="recent">
     <div class="recent-title">RECENT CRYSTALLIZATION</div>
-    <div class="recent-list">
-      {latestFragments.slice(0, 3).map((fragment, i) => (
-        <RockCard
-          id={String(fragments.length - i)}
-          titleCn={fragment.data.title}
-          titleEn={fragment.data.subject}
-          date={fragment.data.pubDate.toISOString().split("T")[0]}
-          href={`/fragments/${fragment.id.replace(/\.(md|mdx)$/, "")}`}
-        />
-      ))}
-    </div>
+      <div class="recent-list">
+       {posts.map((post) => (
+       <div>
+        <h3>{post.title}</h3>
+        <p>{post.slug}</p>
+      </div>
+       ))}
+      </div>
   </section>
 </Layout>
 

@@ -1,62 +1,56 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection, render } from 'astro:content';
 import ChoicePanel from "../../components/ChoicePanel.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
+import RichText from "../../components/RichText.astro";
+import { getPosts, getPostBySlug } from "../../lib/payload";
 
 export async function getStaticPaths() {
-  const experiments = await getCollection('experiments');
+  const experiments = await getPosts("experiment");
   return experiments.map((exp) => ({
-    params: { slug: exp.id.replace(/\.(md|mdx)$/, "") },
+    params: { slug: exp.slug },
   }));
 }
 
-const experiments = await getCollection('experiments');
-const slug = Astro.params.slug;
-const experiment = experiments.find((entry) => entry.id.replace(/\.(md|mdx)$/, "") === slug);
+const experiment = await getPostBySlug(Astro.params.slug);
 
 if (!experiment) {
-  throw new Error(`Experiment not found for slug: ${slug}`);
+  throw new Error(`Experiment not found for slug: ${Astro.params.slug}`);
 }
 
-const { Content } = await render(experiment);
-const collected = experiment.data.pubDate.toISOString().split("T")[0];
-const sorted = [...experiments].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const specimenId = String(sorted.findIndex((entry) => entry.id === experiment.id) + 1).padStart(
-  4,
-  "0",
-);
+const collected = experiment.createdAt?.split("T")[0] ?? "";
+const specimens = await getPosts("experiment");
+const specimenId = String(
+  specimens.findIndex((e) => e.slug === experiment.slug) + 1
+).padStart(4, "0");
+
+const statusLabel =
+  experiment.status === "published" || experiment.status === "Completed"
+    ? "archived"
+    : "crystallizing";
 ---
 
-<Layout title={`${experiment.data.title} | EXPERIMENTS`} description={experiment.data.title}>
+<Layout title={`${experiment.title} | EXPERIMENTS`} description={experiment.title}>
   <article class="experiment-detail">
     <SpecimenLabel
       id={specimenId}
-      titleCn={experiment.data.title}
-      titleEn={experiment.data.lab}
+      titleCn={experiment.title}
+      titleEn={experiment.excerpt ?? experiment.title}
       collected={collected}
       location="digital sediment"
-      composition={`tools / ${experiment.data.tools.join(" / ")}`}
-      status={experiment.data.status === "Completed" ? "archived" : "crystallizing"}
+      status={statusLabel}
       variant="full"
     />
 
-    <div class="meta-section">
-      <div class="meta-section-title">OBJECTIVE</div>
-      <p class="meta-section-content">{experiment.data.objective}</p>
-    </div>
-
-    <div class="meta-section">
-      <div class="meta-section-title">TOOLS</div>
-      <div class="tools-list">
-        {experiment.data.tools.map((tool) => (
-          <span class="tool-tag">{tool}</span>
-        ))}
+    {experiment.excerpt && (
+      <div class="meta-section">
+        <div class="meta-section-title">OBJECTIVE</div>
+        <p class="meta-section-content">{experiment.excerpt}</p>
       </div>
-    </div>
+    )}
 
     <div class="experiment-content">
-      <Content />
+      <RichText content={experiment.content} />
     </div>
 
     <ChoicePanel
@@ -99,21 +93,6 @@ const specimenId = String(sorted.findIndex((entry) => entry.id === experiment.id
   color: var(--paper-bone);
   margin: 0;
   line-height: 1.75;
-}
-
-.tools-list {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.tool-tag {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--paper-bone);
-  border: var(--border-solid);
-  padding: var(--space-1) var(--space-3);
-  background: var(--bg-void);
 }
 
 .experiment-content {

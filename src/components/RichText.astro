@@ -1,0 +1,125 @@
+---
+export interface LexicalNode {
+  type: string;
+  format?: number;
+  indent?: number;
+  version?: number;
+  children?: LexicalNode[];
+  text?: string;
+  tag?: string;
+  listType?: string;
+  url?: string;
+  direction?: string | null;
+  relationTo?: string;
+  value?: Record<string, unknown>;
+}
+
+interface Props {
+  content: { root: LexicalNode } | LexicalNode;
+}
+
+const { content } = Astro.props;
+const rootNode = "root" in content ? content.root : content;
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderInline(node: LexicalNode): string {
+  if (node.type === "linebreak") return "<br>";
+
+  if (node.type === "text") {
+    let text = escapeHtml(node.text ?? "");
+
+    if (node.format) {
+      const fmt = node.format;
+      if (fmt & 1) text = `<strong>${text}</strong>`;   // bold
+      if (fmt & 2) text = `<em>${text}</em>`;             // italic
+      if (fmt & 4) text = `<u>${text}</u>`;               // underline
+      if (fmt & 8) text = `<s>${text}</s>`;               // strikethrough
+      if (fmt & 16) text = `<code>${text}</code>`;        // code
+    }
+    return text;
+  }
+
+  if (node.type === "link") {
+    const href = escapeHtml(node.url ?? "#");
+    const inner = (node.children ?? []).map(renderInline).join("");
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+  }
+
+  return "";
+}
+
+function renderBlock(node: LexicalNode): string {
+  switch (node.type) {
+    case "root":
+    case "section": {
+      return (node.children ?? []).map(renderBlock).join("\n");
+    }
+
+    case "paragraph": {
+      const inner = (node.children ?? []).map(renderInline).join("");
+      return inner ? `<p>${inner}</p>` : "";
+    }
+
+    case "heading": {
+      const tag = node.tag ?? "h2";
+      const inner = (node.children ?? []).map(renderInline).join("");
+      return `<${tag}>${inner}</${tag}>`;
+    }
+
+    case "list": {
+      const listTag = node.listType === "number" ? "ol" : "ul";
+      const items = (node.children ?? []).map(renderBlock).join("\n");
+      return `<${listTag}>\n${items}\n</${listTag}>`;
+    }
+
+    case "listitem": {
+      const inner = (node.children ?? []).map(renderInline).join("");
+      return `<li>${inner}</li>`;
+    }
+
+    case "blockquote": {
+      const inner = (node.children ?? []).map(renderBlock).join("\n");
+      return `<blockquote>${inner}</blockquote>`;
+    }
+
+    case "horizontalrule": {
+      return "<hr>";
+    }
+
+    case "code": {
+      const code = (node.children ?? []).map((c) => c.text ?? "").join("");
+      const lang = (node as Record<string, string>).language ?? "";
+      const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : "";
+      return `<pre><code${langAttr}>${escapeHtml(code)}</code></pre>`;
+    }
+
+    case "upload": {
+      const val = node.value as Record<string, unknown> | undefined;
+      if (val && typeof val === "object") {
+        const src = val.url ? String(val.url) : "";
+        const alt = val.alt ? String(val.alt) : "";
+        const w = val.width ? ` width="${val.width}"` : "";
+        const h = val.height ? ` height="${val.height}"` : "";
+        if (src) return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}"${w}${h} loading="lazy">`;
+      }
+      return "";
+    }
+
+    default: {
+      const fallback = (node.children ?? []).map(renderInline).join("");
+      return fallback ? `<p>${fallback}</p>` : "";
+    }
+  }
+}
+
+const html = renderBlock(rootNode);
+---
+
+<Fragment set:html={html} />

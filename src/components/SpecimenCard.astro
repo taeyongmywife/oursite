@@ -1,0 +1,82 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  tags: string[];
+  date?: string;
+  href: string;
+}
+
+const { id, title, tags, date, href } = Astro.props;
+const normalizedId = id.padStart(4, "0");
+const tagText = tags.length > 0 ? tags.join(" / ") : null;
+---
+
+<a href={href} class="specimen-card">
+  <div class="specimen-top">
+    <span class="specimen-number">SPECIMEN {normalizedId}</span>
+  </div>
+
+  <div class="specimen-title">{title}</div>
+
+  <div class="specimen-footer">
+    {tagText && (
+      <div class="specimen-tags">TAG: {tagText}</div>
+    )}
+    {date && (
+      <div class="specimen-date">DATE: {date}</div>
+    )}
+  </div>
+</a>
+
+<style>
+.specimen-card {
+  display: block;
+  padding: var(--space-6);
+  border: var(--border-solid);
+  background: rgba(10, 10, 12, 0.72);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+
+.specimen-card:hover {
+  border-color: var(--mineral-copper);
+}
+
+.specimen-top {
+  margin-bottom: var(--space-4);
+}
+
+.specimen-number {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mineral-copper);
+  letter-spacing: 0.05em;
+}
+
+.specimen-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--paper-bone);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+.specimen-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.specimen-tags,
+.specimen-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.05em;
+}
+
+.specimen-tags {
+  text-transform: uppercase;
+}
+</style>
