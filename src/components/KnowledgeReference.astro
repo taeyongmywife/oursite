@@ -1,0 +1,102 @@
+---
+import { getKnowledgeBySlugs } from '../lib/payload';
+
+interface Props {
+  slugs: string[];
+}
+
+const { slugs } = Astro.props;
+
+const entries = slugs.length > 0 ? await getKnowledgeBySlugs(slugs) : [];
+---
+
+{entries.length > 0 && (
+  <section class="knowledge-ref">
+    <div class="knowledge-ref-line"></div>
+    <div class="knowledge-ref-header">
+      <div class="knowledge-ref-title-en">RELATED KNOWLEDGE</div>
+      <div class="knowledge-ref-title-cn">关联知识词条</div>
+    </div>
+    <div class="knowledge-ref-list">
+      {entries.map((entry) => (
+        <a href={`/knowledge/${entry.slug}`} class="knowledge-ref-item">
+          <div class="knowledge-ref-term">{entry.term}</div>
+          {entry.summary && (
+            <div class="knowledge-ref-summary">{entry.summary}</div>
+          )}
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+.knowledge-ref {
+  margin-top: var(--space-16);
+}
+
+.knowledge-ref-line {
+  height: 1px;
+  background: var(--rock-granite);
+  margin-bottom: var(--space-8);
+}
+
+.knowledge-ref-header {
+  margin-bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.knowledge-ref-title-en {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.15em;
+  color: var(--rock-granite);
+  text-transform: uppercase;
+}
+
+.knowledge-ref-title-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--paper-bone);
+}
+
+.knowledge-ref-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.knowledge-ref-item {
+  display: block;
+  padding: var(--space-4) var(--space-6);
+  border: var(--border-thin);
+  text-decoration: none;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.knowledge-ref-item:hover {
+  border-color: var(--mineral-copper);
+}
+
+.knowledge-ref-term {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--paper-bone);
+}
+
+.knowledge-ref-summary {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--paper-rust);
+  margin-top: var(--space-2);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .knowledge-ref-item {
+    padding: var(--space-3) var(--space-4);
+  }
+}
+</style>

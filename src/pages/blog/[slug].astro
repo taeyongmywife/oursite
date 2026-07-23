@@ -4,6 +4,7 @@ import Layout from "../../layouts/Layout.astro";
 import ChoicePanel from "../../components/ChoicePanel.astro";
 import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
+import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import { createBlogIdMap, getBlogCategoryLabel, getBlogPostPath } from '../../lib/blog';
 
 export async function getStaticPaths() {
@@ -53,6 +54,8 @@ const status =
     <div class="prose">
       <Content />
     </div>
+
+    <KnowledgeReference slugs={post.data.knowledgeIndex ?? []} />
 
     <ChoicePanel
       prompt="Close this file."
