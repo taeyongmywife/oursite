@@ -14,7 +14,7 @@ interface PayloadPost {
   featured: boolean;
   tags: Array<number | { id: number; title: string; slug: string }>;
   author: number;
-  knowledgeIndex: number[];
+  knowledgeIndex: Array<number | { id: number; term: string; slug: string }>;
   cover: unknown;
 }
 
@@ -121,6 +121,60 @@ export async function getPosts(category?: string): Promise<PayloadPost[]> {
   });
 }
 
+export interface TagGroup {
+  tag: { id: number; title: string; slug: string };
+  posts: Array<{ title: string; slug: string; createdAt: string }>;
+}
+
+export function groupPostsByTag(posts: PayloadPost[]): TagGroup[] {
+  const grouped: Record<string, TagGroup> = {};
+
+  for (const post of posts) {
+    const postTags = Array.isArray(post.tags) ? post.tags : [];
+
+    if (postTags.length === 0) {
+      const key = "__untagged__";
+      if (!grouped[key]) {
+        grouped[key] = {
+          tag: { id: -1, title: "Untagged", slug: "" },
+          posts: [],
+        };
+      }
+      grouped[key].posts.push({
+        title: post.title,
+        slug: post.slug,
+        createdAt: post.createdAt,
+      });
+      continue;
+    }
+
+    for (const tag of postTags) {
+      const tagId = typeof tag === "number" ? tag : tag.id;
+      const tagTitle = typeof tag === "number" ? `Tag #${tag}` : tag.title;
+      const tagSlug = typeof tag === "number" ? "" : tag.slug;
+
+      const key = String(tagId);
+      if (!grouped[key]) {
+        grouped[key] = {
+          tag: { id: tagId, title: tagTitle, slug: tagSlug },
+          posts: [],
+        };
+      }
+      grouped[key].posts.push({
+        title: post.title,
+        slug: post.slug,
+        createdAt: post.createdAt,
+      });
+    }
+  }
+
+  return Object.values(grouped).sort((a, b) => {
+    const countDiff = b.posts.length - a.posts.length;
+    if (countDiff !== 0) return countDiff;
+    return a.tag.title.localeCompare(b.tag.title);
+  });
+}
+
 export async function getPostBySlug(slug: string): Promise<PayloadPost | null> {
   try {
     const res = await fetch(
@@ -156,5 +210,26 @@ export async function getKnowledgeBySlug(slug: string): Promise<Record<string, u
   } catch (err) {
     console.warn(`[payload] Failed to fetch knowledge "${slug}": ${err}`);
     return null;
+  }
+}
+
+export async function getKnowledgeList(): Promise<Array<{ id: number; term: string; slug: string }>> {
+  try {
+    const res = await fetch(`${payloadUrl}/api/knowledge-index?limit=100&depth=0`);
+
+    if (!res.ok) {
+      console.warn(`[payload] getKnowledgeList returned ${res.status}`);
+      return [];
+    }
+
+    const { docs } = await res.json();
+    return docs.map((d: Record<string, unknown>) => ({
+      id: d.id as number,
+      term: d.term as string,
+      slug: d.slug as string,
+    }));
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch knowledge list: ${err}`);
+    return [];
   }
 }

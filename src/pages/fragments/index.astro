@@ -3,57 +3,10 @@ import Layout from "../../layouts/Layout.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import TagBox from "../../components/TagBox.astro";
 
-import { getPosts } from "../../lib/payload";
+import { getPosts, groupPostsByTag } from "../../lib/payload";
 
 const fragments = await getPosts("fragment");
-
-// Group fragments by tag
-const grouped: Record<string, { tag: { id: number; title: string; slug: string }; posts: Array<{ title: string; slug: string; createdAt: string }> }> = {};
-
-for (const fragment of fragments) {
-  const postTags = Array.isArray(fragment.tags) ? fragment.tags : [];
-
-  if (postTags.length === 0) {
-    const key = "__untagged__";
-    if (!grouped[key]) {
-      grouped[key] = {
-        tag: { id: -1, title: "Untagged", slug: "" },
-        posts: [],
-      };
-    }
-    grouped[key].posts.push({
-      title: fragment.title,
-      slug: fragment.slug,
-      createdAt: fragment.createdAt,
-    });
-    continue;
-  }
-
-  for (const tag of postTags) {
-    const tagId = typeof tag === "number" ? tag : tag.id;
-    const tagTitle = typeof tag === "number" ? `Tag #${tag}` : tag.title;
-    const tagSlug = typeof tag === "number" ? "" : tag.slug;
-
-    const key = String(tagId);
-    if (!grouped[key]) {
-      grouped[key] = {
-        tag: { id: tagId, title: tagTitle, slug: tagSlug },
-        posts: [],
-      };
-    }
-    grouped[key].posts.push({
-      title: fragment.title,
-      slug: fragment.slug,
-      createdAt: fragment.createdAt,
-    });
-  }
-}
-
-const sortedGroups = Object.values(grouped).sort((a, b) => {
-  const countDiff = b.posts.length - a.posts.length;
-  if (countDiff !== 0) return countDiff;
-  return a.tag.title.localeCompare(b.tag.title);
-});
+const tagGroups = groupPostsByTag(fragments);
 ---
 
 <Layout
@@ -66,9 +19,9 @@ const sortedGroups = Object.values(grouped).sort((a, b) => {
       Each entry is a specimen. Crystallized from fleeting thoughts, observations, and rough notes.
     </p>
 
-    {sortedGroups.length > 0 ? (
+    {tagGroups.length > 0 ? (
       <div class="tag-group">
-        {sortedGroups.map((group) => (
+        {tagGroups.map((group) => (
           <TagBox tag={group.tag} posts={group.posts} basePath="/fragments" />
         ))}
       </div>

@@ -1,0 +1,14 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  url?: string;
+}
+
+const siteUrl = "https://oursite-delta.vercel.app";
+const { title, description, url } = Astro.props;
+const canonicalUrl = url ? new URL(url, siteUrl).href : new URL(Astro.url.pathname, siteUrl).href;
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />

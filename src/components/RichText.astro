@@ -16,9 +16,10 @@ export interface LexicalNode {
 
 interface Props {
   content: { root: LexicalNode } | LexicalNode;
+  knowledgeMap?: Record<string, string>;
 }
 
-const { content } = Astro.props;
+const { content, knowledgeMap = {} } = Astro.props;
 const rootNode = "root" in content ? content.root : content;
 
 function escapeHtml(str: string): string {
@@ -29,63 +30,107 @@ function escapeHtml(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function renderInline(node: LexicalNode): string {
+let knowledgeRegex: RegExp | null = null;
+function buildKnowledgeRegex(km: Record<string, string>): RegExp {
+  if (knowledgeRegex) return knowledgeRegex;
+  const terms = Object.keys(km).sort((a, b) => b.length - a.length);
+  if (terms.length === 0) {
+    knowledgeRegex = /(?!)/; // never matches
+    return knowledgeRegex;
+  }
+  const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  knowledgeRegex = new RegExp(`(${escaped.join("|")})`, "gi");
+  return knowledgeRegex;
+}
+
+function applyKnowledgeLinks(text: string, km: Record<string, string>): string {
+  if (Object.keys(km).length === 0) return text;
+  const regex = buildKnowledgeRegex(km);
+  return text.replace(regex, (match) => {
+    const slug = km[match.toLowerCase()];
+    if (!slug) return match;
+    return `<a href="/knowledge/${encodeURIComponent(slug)}" class="knowledge-link">${escapeHtml(match)}</a>`;
+  });
+}
+
+function renderInline(node: LexicalNode, km: Record<string, string> = {}): string {
   if (node.type === "linebreak") return "<br>";
 
   if (node.type === "text") {
-    let text = escapeHtml(node.text ?? "");
+    const raw = node.text ?? "";
+    let text = escapeHtml(raw);
+
+    // Apply knowledge links to raw text (before format wrapping)
+    if (Object.keys(km).length > 0 && raw) {
+      if (node.format) {
+        // If text has formatting, apply links inside the format wrapper
+        const linked = applyKnowledgeLinks(text, km);
+        const fmt = node.format;
+        if (fmt & 1) return `<strong>${linked}</strong>`;
+        if (fmt & 2) return `<em>${linked}</em>`;
+        // For other formats, apply links first then format
+        text = linked;
+        if (fmt & 4) text = `<u>${text}</u>`;
+        if (fmt & 8) text = `<s>${text}</s>`;
+        if (fmt & 16) text = `<code>${text}</code>`;
+        return text;
+      } else {
+        // No format, just apply links
+        return applyKnowledgeLinks(text, km);
+      }
+    }
 
     if (node.format) {
       const fmt = node.format;
-      if (fmt & 1) text = `<strong>${text}</strong>`;   // bold
-      if (fmt & 2) text = `<em>${text}</em>`;             // italic
-      if (fmt & 4) text = `<u>${text}</u>`;               // underline
-      if (fmt & 8) text = `<s>${text}</s>`;               // strikethrough
-      if (fmt & 16) text = `<code>${text}</code>`;        // code
+      if (fmt & 1) text = `<strong>${text}</strong>`;
+      if (fmt & 2) text = `<em>${text}</em>`;
+      if (fmt & 4) text = `<u>${text}</u>`;
+      if (fmt & 8) text = `<s>${text}</s>`;
+      if (fmt & 16) text = `<code>${text}</code>`;
     }
     return text;
   }
 
   if (node.type === "link") {
     const href = escapeHtml(node.url ?? "#");
-    const inner = (node.children ?? []).map(renderInline).join("");
+    const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
   }
 
   return "";
 }
 
-function renderBlock(node: LexicalNode): string {
+function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string {
   switch (node.type) {
     case "root":
     case "section": {
-      return (node.children ?? []).map(renderBlock).join("\n");
+      return (node.children ?? []).map((c) => renderBlock(c, km)).join("\n");
     }
 
     case "paragraph": {
-      const inner = (node.children ?? []).map(renderInline).join("");
+      const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return inner ? `<p>${inner}</p>` : "";
     }
 
     case "heading": {
       const tag = node.tag ?? "h2";
-      const inner = (node.children ?? []).map(renderInline).join("");
+      const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return `<${tag}>${inner}</${tag}>`;
     }
 
     case "list": {
       const listTag = node.listType === "number" ? "ol" : "ul";
-      const items = (node.children ?? []).map(renderBlock).join("\n");
+      const items = (node.children ?? []).map((c) => renderBlock(c, km)).join("\n");
       return `<${listTag}>\n${items}\n</${listTag}>`;
     }
 
     case "listitem": {
-      const inner = (node.children ?? []).map(renderInline).join("");
+      const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return `<li>${inner}</li>`;
     }
 
     case "blockquote": {
-      const inner = (node.children ?? []).map(renderBlock).join("\n");
+      const inner = (node.children ?? []).map((c) => renderBlock(c, km)).join("\n");
       return `<blockquote>${inner}</blockquote>`;
     }
 
@@ -113,13 +158,26 @@ function renderBlock(node: LexicalNode): string {
     }
 
     default: {
-      const fallback = (node.children ?? []).map(renderInline).join("");
+      const fallback = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return fallback ? `<p>${fallback}</p>` : "";
     }
   }
 }
 
-const html = renderBlock(rootNode);
+const html = renderBlock(rootNode, knowledgeMap);
 ---
 
 <Fragment set:html={html} />
+
+<style>
+.knowledge-link {
+  color: var(--mineral-copper);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--mineral-moss);
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+
+.knowledge-link:hover {
+  border-bottom-color: var(--mineral-copper);
+}
+</style>

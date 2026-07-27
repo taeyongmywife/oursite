@@ -4,7 +4,7 @@ import ChoicePanel from "../../components/ChoicePanel.astro";
 import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
-import { getPosts, getPostBySlug } from "../../lib/payload";
+import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
 export async function getStaticPaths() {
@@ -27,9 +27,18 @@ const specimens = await getPosts("fragment");
 const specimenId = String(
   specimens.findIndex((e) => e.slug === fragment.slug) + 1
 ).padStart(4, "0");
+
+const knowledgeEntries = await getKnowledgeList();
+const knowledgeMap: Record<string, string> = {};
+for (const k of knowledgeEntries) {
+  knowledgeMap[k.term.toLowerCase()] = k.slug;
+}
+
+const seoTitle = fragment.seoTitle ?? fragment.title;
+const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
 ---
 
-<Layout title={`${fragment.title} | FRAGMENTS`} description={fragment.title}>
+<Layout title={`${seoTitle} | FRAGMENTS`} description={seoDesc}>
   <article class="fragment-detail">
     <SpecimenLabel
       id={specimenId}
@@ -46,13 +55,31 @@ const specimenId = String(
     </div>
 
     <div class="fragment-content">
-      <RichText content={fragment.content} />
+      <RichText content={fragment.content} knowledgeMap={knowledgeMap} />
       {fragment.slug === "groove" && (
         <p class="between-whisper">
           那之后我没有再说话。<a href="/between" class="inline-between">between</a>
         </p>
       )}
     </div>
+
+    {(() => {
+      const ki = fragment.knowledgeIndex;
+      if (!ki || (Array.isArray(ki) && ki.length === 0)) return null;
+      const entries = Array.isArray(ki) ? ki : [];
+      return (
+        <div class="knowledge-related">
+          <div class="related-title">RELATED KNOWLEDGE</div>
+          <div class="related-list">
+            {entries.map((k) => {
+              const slug = typeof k === "object" ? k.slug : String(k);
+              const term = typeof k === "object" ? k.term : slug;
+              return <a href={`/knowledge/${slug}`} class="related-tag">{term}</a>;
+            })}
+          </div>
+        </div>
+      );
+    })()}
 
     <ChoicePanel
       prompt="你看向她，眼神里带着"
@@ -113,6 +140,43 @@ const specimenId = String(
 
 .inline-between:hover {
   border-bottom-color: var(--mineral-copper);
+}
+
+.knowledge-related {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rock-basalt);
+}
+
+.related-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rock-granite);
+  margin-bottom: var(--space-3);
+}
+
+.related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.related-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--paper-bone);
+  border: var(--border-solid);
+  padding: var(--space-1) var(--space-3);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+}
+
+.related-tag:hover {
+  border-color: var(--mineral-copper);
+  color: var(--mineral-copper);
 }
 
 .back-link {

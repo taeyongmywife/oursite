@@ -31,6 +31,7 @@ if (!entry) {
 const term = entry.term as string;
 const summary = entry.summary as string | null;
 const relatedTerms = entry.relatedTerms as Array<{ term: string; slug: string }> | null;
+const relatedCollections = entry.relatedCollections as Array<{ title: string; slug: string }> | null;
 ---
 
 <Layout title={`${term} | KNOWLEDGE`} description={summary ?? term}>
@@ -61,6 +62,21 @@ const relatedTerms = entry.relatedTerms as Array<{ term: string; slug: string }>
             const relTerm = typeof rel === "object" ? rel.term : relSlug;
             return (
               <a href={`/knowledge/${relSlug}`} class="related-tag">{relTerm}</a>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {relatedCollections && relatedCollections.length > 0 && (
+      <div class="knowledge-related">
+        <div class="related-title">RELATED COLLECTIONS</div>
+        <div class="related-list">
+          {relatedCollections.map((col) => {
+            const colSlug = typeof col === "object" ? col.slug : String(col);
+            const colTitle = typeof col === "object" ? col.title : colSlug;
+            return (
+              <span class="related-tag">{colTitle}</span>
             );
           })}
         </div>
