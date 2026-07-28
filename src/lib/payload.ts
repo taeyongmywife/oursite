@@ -1,213 +1,235 @@
-// Payload CMS API data layer for BubbleCrisp frontend
+const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 
-const PAYLOAD_URL = import.meta.env.PUBLIC_PAYLOAD_URL || 'http://localhost:3000';
-
-// --- Types ---
-
-export interface KnowledgeEntry {
+interface PayloadPost {
   id: number;
-  term: string;
+  title: string;
   slug: string;
-  summary?: string | null;
-  content?: LexicalContent | null;
-  icon?: number | MediaDoc | null;
-  category?: number | CategoryDoc | null;
-  tags?: number | TagDoc[] | null;
-  aliases?: { alias?: string | null; id?: string | null }[] | null;
-  relatedTerms?: number | KnowledgeEntry[] | null;
-  relatedCollections?: number | CollectionDoc[] | null;
-  featured?: boolean | null;
-  published?: boolean | null;
-  seoTitle?: string | null;
-  seoDescription?: string | null;
-  updatedAt: string;
+  excerpt: string | null;
+  content: unknown;
+  category: number | { id: number; slug: string; title: string };
+  status: string;
   createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  featured: boolean;
+  tags: Array<number | { id: number; title: string; slug: string }>;
+  author: number;
+  knowledgeIndex: Array<number | { id: number; term: string; slug: string }>;
+  cover: unknown;
 }
 
-interface MediaDoc {
-  id: number;
-  alt: string;
-  url?: string | null;
-  filename?: string | null;
-}
-
-interface CategoryDoc {
-  id: number;
-  title: string;
-  slug: string;
-}
-
-interface TagDoc {
+interface PayloadCategory {
   id: number;
   title: string;
   slug: string;
 }
 
-interface CollectionDoc {
-  id: number;
-  title: string;
-  slug: string;
-  description?: string | null;
-}
+let cachedCategoryMap: Record<string, number> | null = null;
+let cachedTagsMap: Record<number, { id: number; title: string; slug: string }> | null = null;
 
-interface LexicalContent {
-  root: LexicalNode;
-  [key: string]: unknown;
-}
+async function getCategoryMap(): Promise<Record<string, number>> {
+  if (cachedCategoryMap) return cachedCategoryMap;
 
-interface LexicalNode {
-  type: string;
-  children?: LexicalNode[];
-  text?: string;
-  format?: number;
-  direction?: ('ltr' | 'rtl') | null;
-  tag?: string;
-  listType?: string;
-  url?: string;
-  target?: string;
-  rel?: string;
-  fields?: Record<string, unknown>;
-  [key: string]: unknown;
-}
+  try {
+    const res = await fetch(`${payloadUrl}/api/categories?limit=100`);
 
-// --- Lexical to HTML converter ---
-
-const FORMAT_BOLD = 1;
-const FORMAT_ITALIC = 2;
-const FORMAT_STRIKETHROUGH = 4;
-const FORMAT_UNDERLINE = 8;
-const FORMAT_CODE = 16;
-
-function wrapFormat(text: string, format: number): string {
-  if (format === 0 || format === undefined) return text;
-  let result = text;
-  // Apply inner-to-outer: code → strikethrough → underline → italic → bold
-  if (format & FORMAT_CODE) result = `<code>${result}</code>`;
-  if (format & FORMAT_STRIKETHROUGH) result = `<s>${result}</s>`;
-  if (format & FORMAT_UNDERLINE) result = `<u>${result}</u>`;
-  if (format & FORMAT_ITALIC) result = `<em>${result}</em>`;
-  if (format & FORMAT_BOLD) result = `<strong>${result}</strong>`;
-  return result;
-}
-
-function nodeToHtml(node: LexicalNode): string {
-  switch (node.type) {
-    case 'root':
-      return (node.children ?? []).map(nodeToHtml).join('');
-
-    case 'paragraph': {
-      const inner = (node.children ?? []).map(nodeToHtml).join('');
-      return `<p>${inner}</p>`;
+    if (!res.ok) {
+      console.warn(`[payload] Categories fetch returned ${res.status}`);
+      return {};
     }
 
-    case 'heading': {
-      const tag = node.tag ?? 'h2';
-      const inner = (node.children ?? []).map(nodeToHtml).join('');
-      return `<${tag}>${inner}</${tag}>`;
+    const { docs } = await res.json();
+    const map: Record<string, number> = {};
+
+    for (const cat of docs) {
+      map[cat.slug] = cat.id;
     }
 
-    case 'list': {
-      const tag = node.listType === 'number' ? 'ol' : 'ul';
-      const inner = (node.children ?? []).map(nodeToHtml).join('');
-      return `<${tag}>${inner}</${tag}>`;
-    }
-
-    case 'listitem': {
-      const inner = (node.children ?? []).map(nodeToHtml).join('');
-      return `<li>${inner}</li>`;
-    }
-
-    case 'link': {
-      const inner = (node.children ?? []).map(nodeToHtml).join('');
-      const href = node.url ?? '#';
-      const attrs: string[] = [`href="${href}"`];
-      if (node.target) attrs.push(`target="${node.target}"`);
-      if (node.rel) attrs.push(`rel="${node.rel}"`);
-      return `<a ${attrs.join(' ')}>${inner}</a>`;
-    }
-
-    case 'text':
-      return wrapFormat(node.text ?? '', node.format ?? 0);
-
-    case 'linebreak':
-      return '<br>';
-
-    case 'horizontalrule':
-      return '<hr>';
-
-    case 'upload': {
-      const fields = (node.fields ?? {}) as Record<string, string>;
-      if (fields.url) {
-        const alt = fields.alt ?? '';
-        return `<img src="${fields.url}" alt="${alt}" />`;
-      }
-      return '';
-    }
-
-    default:
-      // Unknown node type — recurse into children if any
-      if (node.children && node.children.length > 0) {
-        return node.children.map(nodeToHtml).join('');
-      }
-      return '';
+    cachedCategoryMap = map;
+    return map;
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch categories: ${err}`);
+    return {};
   }
 }
 
-export function lexicalToHtml(content: LexicalContent): string {
-  if (!content?.root) return '';
-  return nodeToHtml(content.root);
+export async function getTagsMap(): Promise<Record<number, { id: number; title: string; slug: string }>> {
+  if (cachedTagsMap) return cachedTagsMap;
+
+  try {
+    const res = await fetch(`${payloadUrl}/api/tags?limit=100`);
+
+    if (!res.ok) {
+      console.warn(`[payload] Tags fetch returned ${res.status}`);
+      return {};
+    }
+
+    const { docs } = await res.json();
+    const map: Record<number, { id: number; title: string; slug: string }> = {};
+
+    for (const tag of docs) {
+      map[tag.id] = { id: tag.id, title: tag.title, slug: tag.slug };
+    }
+
+    cachedTagsMap = map;
+    return map;
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch tags: ${err}`);
+    return {};
+  }
 }
 
-// --- API functions ---
+export async function getPosts(category?: string): Promise<PayloadPost[]> {
+  let docs: PayloadPost[];
 
-async function payloadFetch<T>(endpoint: string): Promise<T | null> {
   try {
-    const res = await fetch(`${PAYLOAD_URL}${endpoint}`);
-    if (!res.ok) return null;
-    return await res.json() as T;
-  } catch {
+    const res = await fetch(`${payloadUrl}/api/posts?depth=1&limit=100`);
+
+    if (!res.ok) {
+      console.warn(`[payload] Posts fetch returned ${res.status}. Returning empty.`);
+      return [];
+    }
+
+    docs = (await res.json()).docs;
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch posts: ${err}. Returning empty.`);
+    return [];
+  }
+
+  const posts: PayloadPost[] = docs.sort(
+    (a: PayloadPost, b: PayloadPost) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  if (!category) {
+    return posts;
+  }
+
+  const categoryMap = await getCategoryMap();
+  const categoryId = categoryMap[category];
+
+  if (!categoryId) {
+    console.warn(`[payload] Category "${category}" not found. Available:`, Object.keys(categoryMap));
+    return [];
+  }
+
+  return posts.filter((post) => {
+    const postCat = post.category;
+    if (typeof postCat === "number") return postCat === categoryId;
+    if (postCat && typeof postCat === "object") return postCat.slug === category;
+    return false;
+  });
+}
+
+export interface TagGroup {
+  tag: { id: number; title: string; slug: string };
+  posts: Array<{ title: string; slug: string; createdAt: string }>;
+}
+
+export function groupPostsByTag(posts: PayloadPost[]): TagGroup[] {
+  const grouped: Record<string, TagGroup> = {};
+
+  for (const post of posts) {
+    const postTags = Array.isArray(post.tags) ? post.tags : [];
+
+    if (postTags.length === 0) {
+      const key = "__untagged__";
+      if (!grouped[key]) {
+        grouped[key] = {
+          tag: { id: -1, title: "Untagged", slug: "" },
+          posts: [],
+        };
+      }
+      grouped[key].posts.push({
+        title: post.title,
+        slug: post.slug,
+        createdAt: post.createdAt,
+      });
+      continue;
+    }
+
+    for (const tag of postTags) {
+      const tagId = typeof tag === "number" ? tag : tag.id;
+      const tagTitle = typeof tag === "number" ? `Tag #${tag}` : tag.title;
+      const tagSlug = typeof tag === "number" ? "" : tag.slug;
+
+      const key = String(tagId);
+      if (!grouped[key]) {
+        grouped[key] = {
+          tag: { id: tagId, title: tagTitle, slug: tagSlug },
+          posts: [],
+        };
+      }
+      grouped[key].posts.push({
+        title: post.title,
+        slug: post.slug,
+        createdAt: post.createdAt,
+      });
+    }
+  }
+
+  return Object.values(grouped).sort((a, b) => {
+    const countDiff = b.posts.length - a.posts.length;
+    if (countDiff !== 0) return countDiff;
+    return a.tag.title.localeCompare(b.tag.title);
+  });
+}
+
+export async function getPostBySlug(slug: string): Promise<PayloadPost | null> {
+  try {
+    const res = await fetch(
+      `${payloadUrl}/api/posts?where[slug][equals]=${encodeURIComponent(slug)}&depth=1&limit=1`
+    );
+
+    if (!res.ok) {
+      console.warn(`[payload] getPostBySlug returned ${res.status} for "${slug}".`);
+      return null;
+    }
+
+    const { docs } = await res.json();
+    return docs?.[0] ?? null;
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch post "${slug}": ${err}`);
     return null;
   }
 }
 
-interface PayloadListResponse<T> {
-  docs: T[];
-  total: number;
-  limit: number;
-  page: number;
-  pagingCounter: number;
-  hasPrevPage: boolean;
-  hasNextPage: boolean;
-  prevPage: number | null;
-  nextPage: number | null;
-}
+export async function getKnowledgeBySlug(slug: string): Promise<Record<string, unknown> | null> {
+  try {
+    const res = await fetch(
+      `${payloadUrl}/api/knowledge-index?where[slug][equals]=${encodeURIComponent(slug)}&depth=2&limit=1`
+    );
 
-export async function getKnowledgeBySlug(slug: string): Promise<KnowledgeEntry | null> {
-  const data = await payloadFetch<PayloadListResponse<KnowledgeEntry>>(
-    `/api/knowledge-index?where[slug][equals]=${encodeURIComponent(slug)}&depth=1&limit=1`
-  );
-  if (!data?.docs?.length) return null;
-  return data.docs[0];
-}
+    if (!res.ok) {
+      console.warn(`[payload] getKnowledgeBySlug returned ${res.status} for "${slug}".`);
+      return null;
+    }
 
-export async function getKnowledgeList(): Promise<KnowledgeEntry[]> {
-  const data = await payloadFetch<PayloadListResponse<KnowledgeEntry>>(
-    `/api/knowledge-index?depth=1&where[published][equals]=true&limit=100&sort=term`
-  );
-  return data?.docs ?? [];
-}
-
-export async function getKnowledgeSlugs(): Promise<string[]> {
-  const entries = await getKnowledgeList();
-  return entries.map((e) => e.slug);
-}
-
-export async function getKnowledgeBySlugs(slugs: string[]): Promise<KnowledgeEntry[]> {
-  if (slugs.length === 0) return [];
-  const results: KnowledgeEntry[] = [];
-  for (const slug of slugs) {
-    const entry = await getKnowledgeBySlug(slug);
-    if (entry) results.push(entry);
+    const { docs } = await res.json();
+    return docs?.[0] ?? null;
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch knowledge "${slug}": ${err}`);
+    return null;
   }
-  return results;
+}
+
+export async function getKnowledgeList(): Promise<Array<{ id: number; term: string; slug: string }>> {
+  try {
+    const res = await fetch(`${payloadUrl}/api/knowledge-index?limit=100&depth=0`);
+
+    if (!res.ok) {
+      console.warn(`[payload] getKnowledgeList returned ${res.status}`);
+      return [];
+    }
+
+    const { docs } = await res.json();
+    return docs.map((d: Record<string, unknown>) => ({
+      id: d.id as number,
+      term: d.term as string,
+      slug: d.slug as string,
+    }));
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch knowledge list: ${err}`);
+    return [];
+  }
 }

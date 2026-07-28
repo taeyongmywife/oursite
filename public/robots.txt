@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://oursite-delta.vercel.app/sitemap-index.xml

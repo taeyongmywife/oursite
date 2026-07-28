@@ -1,13 +1,12 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection } from 'astro:content';
-import RockCard from "../../components/RockCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
+import TagBox from "../../components/TagBox.astro";
 
-const fragments = await getCollection("fragments");
-const sorted = [...fragments].sort(
-  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
-);
+import { getPosts, groupPostsByTag } from "../../lib/payload";
+
+const fragments = await getPosts("fragment");
+const tagGroups = groupPostsByTag(fragments);
 ---
 
 <Layout
@@ -20,18 +19,15 @@ const sorted = [...fragments].sort(
       Each entry is a specimen. Crystallized from fleeting thoughts, observations, and rough notes.
     </p>
 
-    <div class="list">
-      {sorted.map((fragment, i) => (
-        <RockCard
-          id={String(fragments.length - i)}
-          titleCn={fragment.data.title}
-          titleEn={fragment.data.subject}
-          date={fragment.data.pubDate.toISOString().split("T")[0]}
-          href={`/fragments/${fragment.id.replace(/\.(md|mdx)$/, "")}`}
-          variant="card"
-        />
-      ))}
-    </div>
+    {tagGroups.length > 0 ? (
+      <div class="tag-group">
+        {tagGroups.map((group) => (
+          <TagBox tag={group.tag} posts={group.posts} basePath="/fragments" />
+        ))}
+      </div>
+    ) : (
+      <div class="empty">暂无碎片档案。</div>
+    )}
   </section>
 </Layout>
 
@@ -45,9 +41,17 @@ const sorted = [...fragments].sort(
   color: var(--paper-rust);
 }
 
-.list {
+.tag-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-6);
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--rock-granite);
+  text-align: center;
+  padding: var(--space-16) 0;
 }
 </style>

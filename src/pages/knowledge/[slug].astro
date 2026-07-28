@@ -1,295 +1,239 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import ChoicePanel from "../../components/ChoicePanel.astro";
-import SpecimenLabel from "../../components/SpecimenLabel.astro";
-import { getKnowledgeSlugs, getKnowledgeBySlug, lexicalToHtml } from "../../lib/payload";
+import RichText from "../../components/RichText.astro";
+import { getKnowledgeBySlug } from "../../lib/payload";
 
 export async function getStaticPaths() {
-  const slugs = await getKnowledgeSlugs();
-  return slugs.map((slug) => ({
-    params: { slug },
+  const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
+  let entries: Array<{ slug: string }> = [];
+
+  try {
+    const res = await fetch(`${payloadUrl}/api/knowledge-index?limit=100&depth=0`);
+    if (res.ok) {
+      const { docs } = await res.json();
+      entries = docs.filter((d: Record<string, unknown>) => d.slug);
+    }
+  } catch {
+    // Payload offline — empty paths, page won't generate
+  }
+
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
   }));
 }
 
-const slug = Astro.params.slug!;
-const entry = await getKnowledgeBySlug(slug);
+const entry = await getKnowledgeBySlug(Astro.params.slug);
 
 if (!entry) {
-  return Astro.redirect('/404');
+  throw new Error(`Knowledge entry not found for slug: ${Astro.params.slug}`);
 }
 
-const contentHtml = entry.content ? lexicalToHtml(entry.content) : '';
-const collected = entry.createdAt.split('T')[0];
-
-// Resolve related terms (depth=1 populates them)
-const relatedTerms: { term: string; slug: string }[] = [];
-if (entry.relatedTerms && Array.isArray(entry.relatedTerms)) {
-  for (const rt of entry.relatedTerms) {
-    if (typeof rt === 'object' && rt.term && rt.slug) {
-      relatedTerms.push({ term: rt.term, slug: rt.slug });
-    }
-  }
-}
-
-// Resolve related collections (depth=1 populates them)
-const relatedCollections: { title: string; slug: string; description?: string }[] = [];
-if (entry.relatedCollections && Array.isArray(entry.relatedCollections)) {
-  for (const rc of entry.relatedCollections) {
-    if (typeof rc === 'object' && rc.title && rc.slug) {
-      relatedCollections.push({ title: rc.title, slug: rc.slug, description: rc.description });
-    }
-  }
-}
-
-// Resolve aliases
-const aliases: string[] = [];
-if (entry.aliases && Array.isArray(entry.aliases)) {
-  for (const a of entry.aliases) {
-    if (a.alias) aliases.push(a.alias);
-  }
-}
-
-const composition = aliases.length > 0 ? aliases.join(' / ') : entry.slug;
+const term = entry.term as string;
+const summary = entry.summary as string | null;
+const relatedTerms = entry.relatedTerms as Array<{ term: string; slug: string }> | null;
+const relatedCollections = entry.relatedCollections as Array<{ title: string; slug: string }> | null;
 ---
 
-<Layout title={`${entry.term} | KNOWLEDGE`} description={entry.summary ?? entry.term}>
+<Layout title={`${term} | KNOWLEDGE`} description={summary ?? term}>
   <article class="knowledge-detail">
-    <SpecimenLabel
-      id={String(entry.id).padStart(4, '0')}
-      titleCn={entry.term}
-      titleEn="KNOWLEDGE INDEX"
-      collected={collected}
-      location="cabinet classification"
-      composition={composition}
-      status={entry.published ? "crystallizing" : "forming"}
-      variant="full"
-    />
+    <div class="knowledge-head">
+      <div class="knowledge-label">KNOWLEDGE INDEX</div>
+      <h1 class="knowledge-term">{term}</h1>
+    </div>
 
-    {entry.summary && (
+    {summary && (
       <div class="knowledge-summary">
-        <div class="summary-label">SUMMARY</div>
-        <p>{entry.summary}</p>
+        <p>{summary}</p>
       </div>
     )}
 
-    {contentHtml && (
-      <div class="knowledge-content prose">
-        <div set:html={contentHtml} />
+    {entry.content && (
+      <div class="knowledge-content">
+        <RichText content={entry.content as { root: unknown }} />
       </div>
     )}
 
-    {relatedTerms.length > 0 && (
-      <section class="related-section">
-        <div class="related-line"></div>
-        <div class="related-header">
-          <div class="related-title-en">RELATED TERMS</div>
-          <div class="related-title-cn">关联词条</div>
-        </div>
+    {relatedTerms && relatedTerms.length > 0 && (
+      <div class="knowledge-related">
+        <div class="related-title">RELATED TERMS</div>
         <div class="related-list">
-          {relatedTerms.map((rt) => (
-            <a href={`/knowledge/${rt.slug}`} class="related-item">
-              <div class="related-type">TERM</div>
-              <div class="related-title">{rt.term}</div>
-            </a>
-          ))}
+          {relatedTerms.map((rel) => {
+            const relSlug = typeof rel === "object" ? rel.slug : String(rel);
+            const relTerm = typeof rel === "object" ? rel.term : relSlug;
+            return (
+              <a href={`/knowledge/${relSlug}`} class="related-tag">{relTerm}</a>
+            );
+          })}
         </div>
-      </section>
+      </div>
     )}
 
-    {relatedCollections.length > 0 && (
-      <section class="related-section">
-        <div class="related-line"></div>
-        <div class="related-header">
-          <div class="related-title-en">RELATED COLLECTIONS</div>
-          <div class="related-title-cn">关联合集</div>
-        </div>
+    {relatedCollections && relatedCollections.length > 0 && (
+      <div class="knowledge-related">
+        <div class="related-title">RELATED COLLECTIONS</div>
         <div class="related-list">
-          {relatedCollections.map((rc) => (
-            <a href={`/market/${rc.slug}`} class="related-item">
-              <div class="related-type">COLLECTION</div>
-              <div class="related-title">{rc.title}</div>
-              {rc.description && <div class="related-desc">{rc.description}</div>}
-            </a>
-          ))}
+          {relatedCollections.map((col) => {
+            const colSlug = typeof col === "object" ? col.slug : String(col);
+            const colTitle = typeof col === "object" ? col.title : colSlug;
+            return (
+              <span class="related-tag">{colTitle}</span>
+            );
+          })}
         </div>
-      </section>
+      </div>
     )}
 
-    <ChoicePanel
-      prompt="Continue exploring."
-      options={[
-        { label: "Back to blog", href: "/blog" },
-        { label: "Enter fragments", href: "/fragments" },
-      ]}
-    />
+    <a href="/" class="back-link">[ BACK ]</a>
   </article>
 </Layout>
 
 <style>
 .knowledge-detail {
   padding: var(--space-16) 0;
-  max-width: 68ch;
+  max-width: 680px;
   margin: 0 auto;
 }
 
-.knowledge-summary {
-  margin-top: var(--space-8);
-  padding: var(--space-6);
-  border: var(--border-thin);
-  background: rgba(10, 10, 12, 0.72);
+.knowledge-head {
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--rock-basalt);
 }
 
-.summary-label {
+.knowledge-label {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--mineral-copper);
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
+  color: var(--rock-granite);
   text-transform: uppercase;
   margin-bottom: var(--space-3);
 }
 
-.knowledge-summary p {
+.knowledge-term {
   font-family: var(--font-serif);
-  font-size: var(--text-base);
+  font-size: var(--text-2xl);
+  font-weight: 400;
   color: var(--paper-bone);
-  line-height: 1.7;
+  margin: 0;
+}
+
+.knowledge-summary {
+  font-size: var(--text-base);
+  line-height: 1.75;
+  color: var(--paper-rust);
+  margin: 0 0 var(--space-8) 0;
+  padding: var(--space-4) var(--space-6);
+  border-left: 2px solid var(--mineral-copper);
+  background: var(--bg-shelf);
+}
+
+.knowledge-summary p {
   margin: 0;
 }
 
 .knowledge-content {
-  margin-top: var(--space-12);
-}
-
-.prose {
-  color: var(--paper-bone);
+  font-size: var(--text-base);
   line-height: 1.75;
+  color: var(--paper-bone);
 }
 
-.prose :global(p) {
-  margin: 0 0 var(--space-6) 0;
+.knowledge-content :global(p) {
+  margin: 0 0 var(--space-4) 0;
 }
 
-.prose :global(h2) {
-  margin: var(--space-12) 0 var(--space-4) 0;
-  font-size: var(--text-2xl);
-  font-weight: 400;
+.knowledge-content :global(h2) {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  margin: var(--space-8) 0 var(--space-4) 0;
+  color: var(--paper-bone);
 }
 
-.prose :global(h3) {
-  margin: var(--space-8) 0 var(--space-3) 0;
-  font-size: var(--text-xl);
-  font-weight: 400;
-}
-
-.prose :global(a) {
-  color: var(--mineral-copper);
-}
-
-.prose :global(pre) {
-  border: var(--border-thin);
-  background: var(--bg-shelf);
-  padding: var(--space-4);
-  overflow-x: auto;
-}
-
-.prose :global(code) {
-  font-family: var(--font-mono);
-  font-size: 0.95em;
-}
-
-.prose :global(ul), .prose :global(ol) {
-  margin: 0 0 var(--space-6) 0;
+.knowledge-content :global(ul) {
+  margin: 0 0 var(--space-4) 0;
   padding-left: var(--space-6);
 }
 
-.prose :global(li) {
-  margin-bottom: var(--space-2);
+.knowledge-content :global(blockquote) {
+  margin: var(--space-6) 0;
+  padding: var(--space-3) var(--space-5);
+  border-left: 2px solid var(--mineral-copper);
+  background: var(--bg-shelf);
+  color: var(--paper-rust);
 }
 
-.prose :global(hr) {
-  border: none;
-  border-top: var(--border-solid);
-  margin: var(--space-8) 0;
-}
-
-/* Related sections — same pattern as RelatedReferences */
-.related-section {
-  margin-top: var(--space-16);
-}
-
-.related-line {
-  height: 1px;
-  background: var(--rock-granite);
-  margin-bottom: var(--space-8);
-}
-
-.related-header {
-  margin-bottom: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.related-title-en {
+.knowledge-content :global(pre) {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  letter-spacing: 0.15em;
-  color: var(--rock-granite);
-  text-transform: uppercase;
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: var(--space-4);
+  background: var(--bg-shelf);
+  border: var(--border-thin);
+  margin: var(--space-4) 0;
 }
 
-.related-title-cn {
-  font-family: var(--font-serif);
-  font-size: var(--text-lg);
-  color: var(--paper-bone);
+.knowledge-content :global(code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.knowledge-content :global(a) {
+  color: var(--mineral-copper);
+  text-decoration: none;
+}
+
+.knowledge-content :global(a:hover) {
+  text-decoration: underline;
+}
+
+.knowledge-related {
+  margin-top: var(--space-12);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--rock-basalt);
+}
+
+.related-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: var(--rock-granite);
+  text-transform: uppercase;
+  margin-bottom: var(--space-4);
 }
 
 .related-list {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-.related-item {
-  display: block;
-  padding: var(--space-4) var(--space-6);
-  border: var(--border-thin);
-  text-decoration: none;
-  transition: all var(--duration-base) var(--ease-out);
-}
-
-.related-item:hover {
-  border-color: var(--mineral-copper);
-}
-
-.related-type {
+.related-tag {
+  display: inline-block;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--mineral-copper);
-  letter-spacing: 0.1em;
-  margin-bottom: var(--space-1);
-}
-
-.related-title {
-  font-family: var(--font-serif);
-  font-size: var(--text-base);
   color: var(--paper-bone);
+  border: var(--border-solid);
+  padding: var(--space-1) var(--space-3);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
 }
 
-.related-desc {
-  font-family: var(--font-serif);
+.related-tag:hover {
+  border-color: var(--mineral-copper);
+  color: var(--mineral-copper);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: var(--space-12);
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
-  color: var(--paper-rust);
-  margin-top: var(--space-2);
+  color: var(--paper-bone);
+  text-decoration: none;
+  transition: opacity var(--duration-base) var(--ease-out);
 }
 
-@media (max-width: 768px) {
-  .knowledge-detail {
-    padding: var(--space-12) 0;
-  }
-
-  .knowledge-summary {
-    padding: var(--space-4);
-  }
+.back-link:hover {
+  opacity: 0.7;
 }
 </style>

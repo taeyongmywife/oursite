@@ -1,9 +1,10 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection } from "astro:content";
+
 import SectionHeader from "../../components/SectionHeader.astro";
 import CategoryCard from "../../components/CategoryCard.astro";
 import ProductCard from "../../components/cards/ProductCard.astro";
+import { getCollection } from "astro:content";
 
 const products = await getCollection("products");
 const sortedProducts = [...products].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
@@ -77,7 +78,7 @@ const featuredProducts = sortedProducts.slice(0, 5);
           <div class="product-item">
             <ProductCard
               id={String(sortedProducts.length - index).padStart(3, '0')}
-              href={`/market/${product.id.replace(/\.(md|mdx)$/, '')}`}
+              href={`/market/${product.slug}`}
               titleCn={product.data.title}
               titleEn={product.data.subject}
               status={product.data.status}

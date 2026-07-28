@@ -1,68 +1,85 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection, render } from 'astro:content';
 import ChoicePanel from "../../components/ChoicePanel.astro";
 import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
+import RichText from "../../components/RichText.astro";
+import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
 export async function getStaticPaths() {
-  const fragments = await getCollection('fragments');
+  const fragments = await getPosts("fragment");
   return fragments.map((fragment) => ({
-    params: { slug: fragment.id.replace(/\.(md|mdx)$/, "") },
+    params: { slug: fragment.slug },
   }));
 }
 
-const fragments = await getCollection('fragments');
-const slug = Astro.params.slug;
-const fragment = fragments.find((entry) => entry.id.replace(/\.(md|mdx)$/, "") === slug);
+const fragment = await getPostBySlug(Astro.params.slug);
 
 if (!fragment) {
-  throw new Error(`Fragment not found for slug: ${slug}`);
+  throw new Error(`Fragment not found for slug: ${Astro.params.slug}`);
 }
 
-const { Content } = await render(fragment);
-const collected = fragment.data.pubDate.toISOString().split("T")[0];
+const collected = fragment.createdAt?.split("T")[0] ?? "";
 const status =
-  fragment.data.status?.toLowerCase?.().includes("archive") ? "archived" : "crystallizing";
-const sorted = [...fragments].sort(
-  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
-);
-const specimenId = String(sorted.findIndex((entry) => entry.id === fragment.id) + 1).padStart(
-  4,
-  "0",
-);
-const heroFigure = fragment.data.heroImage ?? quartz;
-const heroAlt = fragment.data.heroImage
-  ? `${fragment.data.title} figure`
-  : "Dark quartz cluster specimen";
+  fragment.status?.toLowerCase?.().includes("archiv") ? "archived" : "crystallizing";
+const specimens = await getPosts("fragment");
+const specimenId = String(
+  specimens.findIndex((e) => e.slug === fragment.slug) + 1
+).padStart(4, "0");
+
+const knowledgeEntries = await getKnowledgeList();
+const knowledgeMap: Record<string, string> = {};
+for (const k of knowledgeEntries) {
+  knowledgeMap[k.term.toLowerCase()] = k.slug;
+}
+
+const seoTitle = fragment.seoTitle ?? fragment.title;
+const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
 ---
 
-<Layout title={`${fragment.data.title} | FRAGMENTS`} description={fragment.data.title}>
+<Layout title={`${seoTitle} | FRAGMENTS`} description={seoDesc}>
   <article class="fragment-detail">
     <SpecimenLabel
       id={specimenId}
-      titleCn={fragment.data.title}
-      titleEn={fragment.data.subject}
+      titleCn={fragment.title}
+      titleEn={fragment.title}
       collected={collected}
       location="digital sediment"
-      composition={`${fragment.data.type} / ${fragment.data.subject}`}
       status={status}
       variant="full"
     />
 
     <div class="hero-figure">
-      <MineralFigure src={heroFigure} alt={heroAlt} caption="Specimen figure" />
+      <MineralFigure src={quartz} alt="Dark quartz cluster specimen" />
     </div>
 
     <div class="fragment-content">
-      <Content />
-      {fragment.id === "groove.md" && (
+      <RichText content={fragment.content} knowledgeMap={knowledgeMap} />
+      {fragment.slug === "groove" && (
         <p class="between-whisper">
           那之后我没有再说话。<a href="/between" class="inline-between">between</a>
         </p>
       )}
     </div>
+
+    {(() => {
+      const ki = fragment.knowledgeIndex;
+      if (!ki || (Array.isArray(ki) && ki.length === 0)) return null;
+      const entries = Array.isArray(ki) ? ki : [];
+      return (
+        <div class="knowledge-related">
+          <div class="related-title">RELATED KNOWLEDGE</div>
+          <div class="related-list">
+            {entries.map((k) => {
+              const slug = typeof k === "object" ? k.slug : String(k);
+              const term = typeof k === "object" ? k.term : slug;
+              return <a href={`/knowledge/${slug}`} class="related-tag">{term}</a>;
+            })}
+          </div>
+        </div>
+      );
+    })()}
 
     <ChoicePanel
       prompt="你看向她，眼神里带着"
@@ -123,6 +140,43 @@ const heroAlt = fragment.data.heroImage
 
 .inline-between:hover {
   border-bottom-color: var(--mineral-copper);
+}
+
+.knowledge-related {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--rock-basalt);
+}
+
+.related-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rock-granite);
+  margin-bottom: var(--space-3);
+}
+
+.related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.related-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--paper-bone);
+  border: var(--border-solid);
+  padding: var(--space-1) var(--space-3);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+}
+
+.related-tag:hover {
+  border-color: var(--mineral-copper);
+  color: var(--mineral-copper);
 }
 
 .back-link {
