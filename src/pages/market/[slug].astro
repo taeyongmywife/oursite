@@ -1,82 +1,97 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getCollection, render } from 'astro:content';
-import SpecimenLabel from "../../components/SpecimenLabel.astro";
-import BuyButton from "../../components/BuyButton.astro";
-import RelatedReferences from "../../components/RelatedReferences.astro";
+import RichText from "../../components/RichText.astro";
+import { getProducts, getProductBySlug, type PayloadProduct } from "../../lib/payload";
 
 export async function getStaticPaths() {
-  const products = await getCollection('products');
-  return products.map((p) => ({
-    params: { slug: p.id.replace(/\.(md|mdx)$/, '') },
+  const products = await getProducts();
+  return products.map((p, i) => ({
+    params: { slug: p.slug },
+    props: { specimenId: String(i + 1).padStart(3, "0") },
   }));
 }
 
-const products = await getCollection('products');
-const slug = Astro.params.slug;
-const product = products.find((entry) => entry.id.replace(/\.(md|mdx)$/, '') === slug);
+const { specimenId } = Astro.props;
+const product = await getProductBySlug(Astro.params.slug);
 
 if (!product) {
-  throw new Error(`Product not found for slug: ${slug}`);
+  throw new Error(`Product not found for slug: ${Astro.params.slug}`);
 }
 
-const { Content } = await render(product);
-const collected = product.data.pubDate.toISOString().split("T")[0];
-const sortedProducts = [...products].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
-const specimenId = String(sortedProducts.findIndex((entry) => entry.id === product.id) + 1).padStart(3, "0");
+const getCategoryTitle = (p: PayloadProduct): string => {
+  const cat = p.category;
+  if (typeof cat === "object" && cat !== null) return cat.title;
+  return "";
+};
+
+const getTagName = (tag: number | { id: number; title: string; slug: string }): string => {
+  return typeof tag === "object" ? tag.title : `Tag #${tag}`;
+};
+
+const statusLabel: Record<string, string> = {
+  available: "AVAILABLE",
+  unavailable: "UNAVAILABLE",
+  draft: "DRAFT",
+};
+const statusClass = product.status ? `status-${product.status}` : "";
+
+const formattedPrice =
+  product.price !== null && product.price !== undefined
+    ? `${product.currency ?? ""} ${product.price}`.trim()
+    : "";
+
+const categoryTitle = getCategoryTitle(product);
+const tagList = Array.isArray(product.tags) ? product.tags : [];
 ---
 
-<Layout title={`${product.data.title} | MARKET`} description={product.data.subject}>
+<Layout title={`${product.title} | MARKET`} description={product.shortDescription ?? product.title}>
   <article class="product-detail">
-    <SpecimenLabel
-      id={specimenId}
-      titleCn={product.data.title}
-      titleEn={product.data.subject}
-      collected={collected}
-      location={`Market · ${product.data.category}`}
-      composition="Product"
-      status={product.data.status === "Available" ? "available" : "coming-soon"}
-      variant="full"
-    />
+    <div class="product-head">
+      <div class="product-label">PRODUCT · #{specimenId}</div>
+      <h1 class="product-title">{product.title}</h1>
+      <div class="product-meta-row">
+        {product.productCode && (
+          <span class="meta-item">CODE: {product.productCode}</span>
+        )}
+        {categoryTitle && (
+          <span class="meta-item">CAT: {categoryTitle}</span>
+        )}
+        {product.status && (
+          <span class={`meta-item product-status ${statusClass}`}>
+            STATUS: {statusLabel[product.status] ?? product.status.toUpperCase()}
+          </span>
+        )}
+      </div>
+    </div>
 
-    {product.data.coverImage && (
+    {product.coverImage && (
       <div class="product-cover">
-        <img src={product.data.coverImage.src} alt={product.data.title} />
+        <img src={product.coverImage.url} alt={product.coverImage.alt || product.title} />
       </div>
     )}
 
-    <div class="product-info">
-      {product.data.price && (
-        <div class="product-price">{product.data.price}</div>
-      )}
-      <BuyButton
-        purchaseChannel={product.data.purchaseChannel}
-        externalUrl={product.data.externalUrl}
-      />
-    </div>
+    {formattedPrice && (
+      <div class="product-price-row">
+        <span class="product-price">{formattedPrice}</span>
+      </div>
+    )}
 
-    {product.data.specs && (
-      <div class="specs-section">
-        <div class="specs-title">SPECIFICATIONS</div>
-        <div class="specs-list">
-          {Object.entries(product.data.specs).map(([key, value]) => (
-            <div class="spec-item">
-              <div class="spec-key">{key}</div>
-              <div class="spec-value">{value}</div>
-            </div>
+    {tagList.length > 0 && (
+      <div class="product-tags">
+        <div class="tags-title">TAGS</div>
+        <div class="tags-list">
+          {tagList.map((tag) => (
+            <span class="tag-chip">{getTagName(tag)}</span>
           ))}
         </div>
       </div>
     )}
 
-    <div class="product-content">
-      <Content />
-    </div>
-
-    <RelatedReferences
-      relatedExperiments={product.data.relatedExperiments}
-      relatedFragments={product.data.relatedFragments}
-    />
+    {product.description && (
+      <div class="product-content">
+        <RichText content={product.description as { root: unknown }} />
+      </div>
+    )}
 
     <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
   </article>
@@ -87,6 +102,50 @@ const specimenId = String(sortedProducts.findIndex((entry) => entry.id === produ
   padding: var(--space-16) 0;
   max-width: 680px;
   margin: 0 auto;
+}
+
+.product-head {
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--rock-basalt);
+}
+
+.product-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  color: var(--rock-granite);
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.product-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  color: var(--paper-bone);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.product-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.05em;
+  color: var(--paper-rust);
+}
+
+.product-status.status-available {
+  color: var(--mineral-copper);
+}
+
+.product-status.status-unavailable {
+  color: var(--paper-rust);
+}
+
+.product-status.status-draft {
+  color: var(--rock-granite);
 }
 
 .product-cover {
@@ -104,11 +163,8 @@ const specimenId = String(sortedProducts.findIndex((entry) => entry.id === produ
   object-fit: cover;
 }
 
-.product-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-8) 0;
+.product-price-row {
+  padding: var(--space-6) 0;
   border-top: var(--border-thin);
   border-bottom: var(--border-thin);
 }
@@ -119,44 +175,32 @@ const specimenId = String(sortedProducts.findIndex((entry) => entry.id === produ
   color: var(--mineral-copper);
 }
 
-.specs-section {
-  margin: var(--space-12) 0;
+.product-tags {
+  margin: var(--space-8) 0;
 }
 
-.specs-title {
+.tags-title {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--paper-bone);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
 }
 
-.specs-list {
+.tags-list {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-.spec-item {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-4) 0;
-  border-bottom: 1px dashed var(--rock-granite);
-}
-
-.spec-key {
+.tag-chip {
+  display: inline-block;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  letter-spacing: 0.1em;
-  color: var(--rock-granite);
-  text-transform: uppercase;
-}
-
-.spec-value {
-  font-family: var(--font-serif);
-  font-size: var(--text-base);
   color: var(--paper-bone);
+  border: var(--border-solid);
+  padding: var(--space-1) var(--space-3);
 }
 
 .product-content {
@@ -174,6 +218,44 @@ const specimenId = String(sortedProducts.findIndex((entry) => entry.id === produ
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
   margin: var(--space-8) 0 var(--space-4) 0;
+}
+
+.product-content :global(ul) {
+  margin: 0 0 var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.product-content :global(blockquote) {
+  margin: var(--space-6) 0;
+  padding: var(--space-3) var(--space-5);
+  border-left: 2px solid var(--mineral-copper);
+  background: var(--bg-shelf);
+  color: var(--paper-rust);
+}
+
+.product-content :global(pre) {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: var(--space-4);
+  background: var(--bg-shelf);
+  border: var(--border-thin);
+  margin: var(--space-4) 0;
+}
+
+.product-content :global(code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.product-content :global(a) {
+  color: var(--mineral-copper);
+  text-decoration: none;
+}
+
+.product-content :global(a:hover) {
+  text-decoration: underline;
 }
 
 .back-link {

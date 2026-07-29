@@ -3,26 +3,42 @@ interface Props {
   id: string;
   href: string;
   titleCn: string;
-  titleEn: string;
-  status: string;
-  price?: string;
-  coverImage?: ImageMetadata;
+  titleEn?: string;
+  category?: string;
+  status?: string;
+  price?: string | number;
+  coverImage?: string;
 }
 
-const { id, href, titleCn, titleEn, status, price, coverImage } = Astro.props;
+const { id, href, titleCn, titleEn, category, status, price, coverImage } = Astro.props;
+
+const statusLabel: Record<string, string> = {
+  available: 'AVAILABLE',
+  unavailable: 'UNAVAILABLE',
+  draft: 'DRAFT',
+};
+const statusClass = status ? `status-${status}` : '';
+const displayPrice =
+  price !== undefined && price !== null && price !== ''
+    ? String(price)
+    : '';
 ---
 
 <a href={href} class="product-card">
   <div class="product-cover">
     {coverImage && (
-      <img src={coverImage.src} alt={titleCn} class="product-image" />
+      <img src={coverImage} alt={titleCn} class="product-image" />
+    )}
+    {status && (
+      <span class={`product-status ${statusClass}`}>{statusLabel[status] ?? status.toUpperCase()}</span>
     )}
   </div>
   <div class="product-content">
+    {category && <div class="product-category">{category}</div>}
     <h3 class="product-title">{titleCn}</h3>
-    <div class="product-subject">{titleEn}</div>
-    {price && <div class="product-meta">
-      <span class="product-price">{price}</span>
+    {titleEn && <div class="product-subject">{titleEn}</div>}
+    {displayPrice && <div class="product-meta">
+      <span class="product-price">{displayPrice}</span>
     </div>}
   </div>
 </a>
@@ -44,6 +60,7 @@ const { id, href, titleCn, titleEn, status, price, coverImage } = Astro.props;
 }
 
 .product-cover {
+  position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
   background: var(--bg-display);
@@ -56,12 +73,46 @@ const { id, href, titleCn, titleEn, status, price, coverImage } = Astro.props;
   object-fit: cover;
 }
 
+.product-status {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  background: rgba(10, 10, 12, 0.85);
+  border: 1px solid var(--rock-basalt);
+  color: var(--rock-granite);
+}
+
+.product-status.status-available {
+  color: var(--mineral-copper);
+  border-color: var(--mineral-copper);
+}
+
+.product-status.status-unavailable {
+  color: var(--paper-rust);
+}
+
+.product-status.status-draft {
+  color: var(--rock-granite);
+}
+
 .product-content {
   padding: var(--space-4);
-  display: grid;
-  grid-template-rows: 3.2em 3.9em 1fr 1.8em;
-  row-gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   flex: 1;
+}
+
+.product-category {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mineral-copper);
 }
 
 .product-title {
@@ -70,8 +121,6 @@ const { id, href, titleCn, titleEn, status, price, coverImage } = Astro.props;
   color: var(--paper-bone);
   margin: 0;
   line-height: 1.2;
-  align-self: start;
-  overflow: hidden;
 }
 
 .product-subject {
@@ -79,16 +128,17 @@ const { id, href, titleCn, titleEn, status, price, coverImage } = Astro.props;
   font-size: var(--text-sm);
   color: var(--paper-rust);
   letter-spacing: 0.05em;
-  line-height: 1.2;
-  align-self: start;
+  line-height: 1.3;
   overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .product-meta {
+  margin-top: auto;
   display: flex;
   align-items: flex-start;
-  grid-row: 4;
-  align-self: end;
 }
 
 .product-price {

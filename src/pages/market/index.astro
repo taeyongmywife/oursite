@@ -1,63 +1,80 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-
 import SectionHeader from "../../components/SectionHeader.astro";
 import CategoryCard from "../../components/CategoryCard.astro";
 import ProductCard from "../../components/cards/ProductCard.astro";
-import { getCollection } from "astro:content";
+import { getProducts, type PayloadProduct } from "../../lib/payload";
 
-const products = await getCollection("products");
-const sortedProducts = [...products].sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+const products = await getProducts();
 
-// Count products by category
-const toolsCount = products.filter(p => p.data.category === 'Tools').length;
-const knowledgeCount = products.filter(p => p.data.category === 'Knowledge').length;
-const worksCount = products.filter(p => p.data.category === 'Works').length;
+const getCategorySlug = (product: PayloadProduct): string => {
+  const cat = product.category;
+  if (typeof cat === "object" && cat !== null) return cat.slug;
+  return "";
+};
+
+const getCategoryTitle = (product: PayloadProduct): string => {
+  const cat = product.category;
+  if (typeof cat === "object" && cat !== null) return cat.title;
+  return "";
+};
+
+const formatPrice = (product: PayloadProduct): string => {
+  if (product.price === null || product.price === undefined) return "";
+  const currency = product.currency ?? "";
+  return currency ? `${currency} ${product.price}` : `${product.price}`;
+};
+
+// Count products by fixed market category
+const toolsCount = products.filter((p) => getCategorySlug(p) === "tools").length;
+const knowledgeCount = products.filter((p) => getCategorySlug(p) === "knowledge").length;
+const worksCount = products.filter((p) => getCategorySlug(p) === "works").length;
 
 const categories = [
   {
-    id: '001',
-    titleCn: '工具',
-    titleEn: 'Tools',
-    description: '精心选品的数字硬件与生产力工具',
-    descriptionEn: 'Curated digital hardware & productivity tools',
+    id: "001",
+    titleCn: "工具",
+    titleEn: "Tools",
+    description: "精心选品的数字硬件与生产力工具",
+    descriptionEn: "Curated digital hardware & productivity tools",
     count: toolsCount,
-    unit: '件',
-    category: 'Tools',
-    href: '/market/tools',
+    unit: "件",
+    category: "Tools",
+    href: "/market/tools",
   },
   {
-    id: '002',
-    titleCn: '知识',
-    titleEn: 'Knowledge',
-    description: '深度思考和知识沉淀',
-    descriptionEn: 'Deep thinking and knowledge crystallization',
+    id: "002",
+    titleCn: "知识",
+    titleEn: "Knowledge",
+    description: "深度思考和知识沉淀",
+    descriptionEn: "Deep thinking and knowledge crystallization",
     count: knowledgeCount,
-    unit: '卷',
-    category: 'Knowledge',
-    href: '/market/knowledge',
+    unit: "卷",
+    category: "Knowledge",
+    href: "/market/knowledge",
   },
   {
-    id: '003',
-    titleCn: '作品',
-    titleEn: 'Works',
-    description: '创意作品和数字艺术品',
-    descriptionEn: 'Creative projects and digital artifacts',
+    id: "003",
+    titleCn: "作品",
+    titleEn: "Works",
+    description: "创意作品和数字艺术品",
+    descriptionEn: "Creative projects and digital artifacts",
     count: worksCount,
-    unit: '帧',
-    category: 'Works',
-    href: '/market/works',
+    unit: "帧",
+    category: "Works",
+    href: "/market/works",
   },
 ];
 
-// Get featured products (latest 5, single row)
-const featuredProducts = sortedProducts.slice(0, 5);
+// Recently added (latest 5 by updatedAt)
+const featuredProducts = products.slice(0, 5);
+const productIndex = new Map(products.map((p, i) => [p.slug, i]));
 ---
 
 <Layout title="MARKET | BubbleCrisp" description="Market - 安静的策展商店">
   <section class="page">
     <SectionHeader en="MARKET" cn="策展商店" count={products.length} />
-    
+
     <!-- Visual Center: Categories -->
     <div class="categories-section">
       <div class="categories-grid">
@@ -74,16 +91,17 @@ const featuredProducts = sortedProducts.slice(0, 5);
         <div class="recent-line"></div>
       </div>
       <div class="products-row">
-        {featuredProducts.map((product, index) => (
+        {featuredProducts.map((product) => (
           <div class="product-item">
             <ProductCard
-              id={String(sortedProducts.length - index).padStart(3, '0')}
+              id={String((productIndex.get(product.slug) ?? 0) + 1).padStart(3, "0")}
               href={`/market/${product.slug}`}
-              titleCn={product.data.title}
-              titleEn={product.data.subject}
-              status={product.data.status}
-              price={product.data.price}
-              coverImage={product.data.coverImage}
+              titleCn={product.title}
+              titleEn={product.shortDescription ?? ""}
+              category={getCategoryTitle(product)}
+              status={product.status}
+              price={formatPrice(product)}
+              coverImage={product.coverImage?.url}
             />
           </div>
         ))}
@@ -103,14 +121,14 @@ const featuredProducts = sortedProducts.slice(0, 5);
 /* Categories Section - Refined Size */
 .categories-section {
   width: 100%;
-  max-width: 900px; /* Limit max width to reduce size on large screens */
+  max-width: 900px;
   margin: 0 auto;
 }
 
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4); /* Reduced gap */
+  gap: var(--space-4);
 }
 
 /* Recent Section - Subordinate & Horizontal */
@@ -143,20 +161,18 @@ const featuredProducts = sortedProducts.slice(0, 5);
 
 .products-row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)); /* Force equal width even with long text */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
 .product-item {
   width: 100%;
-  display: flex; /* Ensure the item stretches vertically */
+  display: flex;
 }
 
 /* Override ProductCard styles for small size in row */
 .product-item :global(.product-content) {
   padding: var(--space-3);
-  grid-template-rows: 2.4em 3.3em 1fr 1.2em;
-  row-gap: var(--space-2);
 }
 
 .product-item :global(.product-title) {
@@ -167,6 +183,7 @@ const featuredProducts = sortedProducts.slice(0, 5);
 .product-item :global(.product-subject) {
   font-size: var(--text-xs);
   line-height: 1.2;
+  -webkit-line-clamp: 2;
 }
 
 .product-item :global(.product-price) {
@@ -188,13 +205,13 @@ const featuredProducts = sortedProducts.slice(0, 5);
   .categories-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .products-row {
-    gap: var(--space-2); /* Even tighter gap for mobile to fit 5 */
+    gap: var(--space-2);
   }
 
   .product-item :global(.product-title) {
-    font-size: var(--text-xs); /* Scale down font for mobile */
+    font-size: var(--text-xs);
   }
 }
 </style>

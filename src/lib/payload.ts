@@ -233,3 +233,71 @@ export async function getKnowledgeList(): Promise<Array<{ id: number; term: stri
     return [];
   }
 }
+
+// ===========================
+// Products
+// ===========================
+
+export interface PayloadMedia {
+  id: number;
+  url: string;
+  alt: string;
+  width?: number;
+  height?: number;
+}
+
+export interface PayloadProduct {
+  id: number;
+  title: string;
+  slug: string;
+  productCode: string | null;
+  coverImage: PayloadMedia | null;
+  gallery: PayloadMedia[] | null;
+  shortDescription: string | null;
+  description: unknown;
+  category: number | { id: number; title: string; slug: string } | null;
+  tags: Array<number | { id: number; title: string; slug: string }> | null;
+  price: number | null;
+  currency: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getProducts(): Promise<PayloadProduct[]> {
+  try {
+    const res = await fetch(`${payloadUrl}/api/products?depth=1&limit=100`);
+
+    if (!res.ok) {
+      console.warn(`[payload] Products fetch returned ${res.status}. Returning empty.`);
+      return [];
+    }
+
+    const { docs } = await res.json();
+    return (docs as PayloadProduct[]).sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch products: ${err}. Returning empty.`);
+    return [];
+  }
+}
+
+export async function getProductBySlug(slug: string): Promise<PayloadProduct | null> {
+  try {
+    const res = await fetch(
+      `${payloadUrl}/api/products?where[slug][equals]=${encodeURIComponent(slug)}&depth=1&limit=1`
+    );
+
+    if (!res.ok) {
+      console.warn(`[payload] getProductBySlug returned ${res.status} for "${slug}".`);
+      return null;
+    }
+
+    const { docs } = await res.json();
+    return (docs as PayloadProduct[])?.[0] ?? null;
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch product "${slug}": ${err}`);
+    return null;
+  }
+}
