@@ -1,61 +1,78 @@
 ---
-import { getCollection, render } from 'astro:content';
 import Layout from "../../layouts/Layout.astro";
 import ChoicePanel from "../../components/ChoicePanel.astro";
 import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
+import RichText from "../../components/RichText.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
-import { createBlogIdMap, getBlogCategoryLabel, getBlogPostPath } from '../../lib/blog';
+import { getPostBySlug, getPosts, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map((post) => ({
-    params: { slug: getBlogPostPath(post) },
-  }));
+  const posts = await getPosts();
+  return posts
+    .filter((p) => p.status === "published")
+    .map((post) => ({
+      params: { slug: post.slug },
+    }));
 }
 
-const posts = await getCollection('blog');
-const slug = Astro.params.slug;
-const post = posts.find((entry) => getBlogPostPath(entry) === slug);
+const slug = Astro.params.slug!;
+const post = await getPostBySlug(slug);
 
 if (!post) {
   throw new Error(`Blog post not found for slug: ${slug}`);
 }
 
-const archiveId = createBlogIdMap(posts).get(getBlogPostPath(post)) ?? 'FRAGMENT_000';
-const specimenId = (archiveId.match(/\d+/)?.[0] ?? "0").padStart(4, "0");
-const { Content } = await render(post);
-const collected = post.data.pubDate.toISOString().split("T")[0];
-const status =
-  post.data.status?.includes("归档") || post.data.status?.toLowerCase?.().includes("archiv")
-    ? "archived"
-    : "crystallizing";
+const allPosts = await getPosts();
+const specimenId = String(allPosts.findIndex((p) => p.slug === slug) + 1).padStart(4, "0");
+const collected = post.createdAt.split("T")[0];
+
+const categoryLabel =
+  typeof post.category === "object" && post.category !== null
+    ? post.category.title
+    : String(post.category);
+
+const knowledgeEntries =
+  Array.isArray(post.knowledgeIndex)
+    ? post.knowledgeIndex.map((ki) => {
+        if (typeof ki === "object" && ki !== null) {
+          return { term: ki.term, slug: ki.slug, summary: ki.summary ?? undefined };
+        }
+        return null;
+      })
+      .filter(Boolean)
+    : [];
+
+const coverUrl =
+  post.cover && typeof post.cover === "object" && post.cover !== null
+    ? (post.cover as { url?: string }).url ?? undefined
+    : undefined;
 ---
 
-<Layout title={`${post.data.title} | BLOG`} description={post.data.description ?? post.data.title}>
+<Layout title={`${post.title} | BLOG`} description={post.excerpt ?? post.title}>
   <article class="post">
     <SpecimenLabel
       id={specimenId}
-      titleCn={post.data.title}
-      titleEn={getBlogCategoryLabel(post.data.category)}
+      titleCn={post.title}
+      titleEn={categoryLabel}
       collected={collected}
       location="digital sediment"
-      composition={post.data.subject ?? post.data.category}
-      status={status}
+      composition={categoryLabel}
+      status="crystallizing"
       variant="full"
     />
 
-    {post.data.heroImage && (
+    {coverUrl && (
       <div class="hero-figure">
-        <MineralFigure src={post.data.heroImage} alt={post.data.title} caption="Specimen figure" />
+        <MineralFigure src={coverUrl} alt={post.title} caption="Specimen figure" />
       </div>
     )}
 
     <div class="prose">
-      <Content />
+      <RichText content={post.content as { root: unknown }} />
     </div>
 
-    <KnowledgeReference slugs={post.data.knowledgeIndex ?? []} />
+    <KnowledgeReference entries={knowledgeEntries} />
 
     <ChoicePanel
       prompt="Close this file."

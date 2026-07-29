@@ -1,13 +1,15 @@
 ---
-import { getKnowledgeBySlugs } from '../lib/payload';
-
-interface Props {
-  slugs: string[];
+interface KnowledgeEntry {
+  term: string;
+  slug: string;
+  summary?: string;
 }
 
-const { slugs } = Astro.props;
+interface Props {
+  entries: KnowledgeEntry[];
+}
 
-const entries = slugs.length > 0 ? await getKnowledgeBySlugs(slugs) : [];
+const { entries } = Astro.props;
 ---
 
 {entries.length > 0 && (
