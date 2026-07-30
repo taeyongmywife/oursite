@@ -1,26 +1,44 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import RichText from "../../components/RichText.astro";
-import { getProducts, getProductBySlug, type PayloadProduct } from "../../lib/payload";
+import SectionHeader from "../../components/SectionHeader.astro";
+import ProductCard from "../../components/cards/ProductCard.astro";
+import { getProducts, getProductBySlug, getMarketCategories, type PayloadProduct } from "../../lib/payload";
+
+const labelMap: Record<string, { cn: string; en: string; unit: string }> = {
+  toolkit: { cn: "工具", en: "TOOLS", unit: "件" },
+  knowledge: { cn: "知识", en: "KNOWLEDGE", unit: "卷" },
+  works: { cn: "作品", en: "WORKS", unit: "帧" },
+};
 
 export async function getStaticPaths() {
   const products = await getProducts();
-  return products.map((p, i) => ({
-    params: { slug: p.slug },
-    props: { specimenId: String(i + 1).padStart(3, "0") },
-  }));
+  const categories = await getMarketCategories();
+
+  return [
+    ...products.map((p, i) => ({
+      params: { slug: p.slug },
+      props: { type: "product", specimenId: String(i + 1).padStart(3, "0") },
+    })),
+    ...categories.map((c) => ({
+      params: { slug: c.slug },
+      props: { type: "category", categorySlug: c.slug },
+    })),
+  ];
 }
 
-const { specimenId } = Astro.props;
-const product = await getProductBySlug(Astro.params.slug);
+const { type, specimenId, categorySlug } = Astro.props;
+const isCategory = type === "category";
 
-if (!product) {
+const product = isCategory ? null : await getProductBySlug(Astro.params.slug);
+
+if (!isCategory && !product) {
   throw new Error(`Product not found for slug: ${Astro.params.slug}`);
 }
 
-const getCategoryTitle = (p: PayloadProduct): string => {
+const getCategorySlug = (p: PayloadProduct): string => {
   const cat = p.category;
-  if (typeof cat === "object" && cat !== null) return cat.title;
+  if (typeof cat === "object" && cat !== null) return cat.slug;
   return "";
 };
 
@@ -28,76 +46,149 @@ const getTagName = (tag: number | { id: number; title: string; slug: string }): 
   return typeof tag === "object" ? tag.title : `Tag #${tag}`;
 };
 
+const formatPrice = (p: PayloadProduct): string => {
+  if (p.price === null || p.price === undefined) return "";
+  const currency = p.currency ?? "";
+  return currency ? `${currency} ${p.price}`.trim() : `${p.price}`;
+};
+
+// Category view data
+const categoryProducts = isCategory
+  ? (await getProducts()).filter((p) => getCategorySlug(p) === categorySlug)
+  : [];
+const categoryLabel = isCategory
+  ? labelMap[categorySlug] ?? { cn: categorySlug, en: categorySlug.toUpperCase(), unit: "件" }
+  : null;
+
+// Product view data
 const statusLabel: Record<string, string> = {
   available: "AVAILABLE",
   unavailable: "UNAVAILABLE",
   draft: "DRAFT",
 };
-const statusClass = product.status ? `status-${product.status}` : "";
-
+const statusClass = product?.status ? `status-${product.status}` : "";
 const formattedPrice =
-  product.price !== null && product.price !== undefined
+  product && product.price !== null && product.price !== undefined
     ? `${product.currency ?? ""} ${product.price}`.trim()
     : "";
-
-const categoryTitle = getCategoryTitle(product);
-const tagList = Array.isArray(product.tags) ? product.tags : [];
+const categoryTitle = product ? getCategorySlug(product) : "";
+const tagList = product && Array.isArray(product.tags) ? product.tags : [];
 ---
 
-<Layout title={`${product.title} | MARKET`} description={product.shortDescription ?? product.title}>
-  <article class="product-detail">
-    <div class="product-head">
-      <div class="product-label">PRODUCT · #{specimenId}</div>
-      <h1 class="product-title">{product.title}</h1>
-      <div class="product-meta-row">
-        {product.productCode && (
-          <span class="meta-item">CODE: {product.productCode}</span>
-        )}
-        {categoryTitle && (
-          <span class="meta-item">CAT: {categoryTitle}</span>
-        )}
-        {product.status && (
-          <span class={`meta-item product-status ${statusClass}`}>
-            STATUS: {statusLabel[product.status] ?? product.status.toUpperCase()}
-          </span>
-        )}
-      </div>
-    </div>
-
-    {product.coverImage && (
-      <div class="product-cover">
-        <img src={product.coverImage.url} alt={product.coverImage.alt || product.title} />
-      </div>
-    )}
-
-    {formattedPrice && (
-      <div class="product-price-row">
-        <span class="product-price">{formattedPrice}</span>
-      </div>
-    )}
-
-    {tagList.length > 0 && (
-      <div class="product-tags">
-        <div class="tags-title">TAGS</div>
-        <div class="tags-list">
-          {tagList.map((tag) => (
-            <span class="tag-chip">{getTagName(tag)}</span>
+{
+  isCategory ? (
+    <Layout title={`${categoryLabel?.en} | MARKET`} description={`Market - ${categoryLabel?.en}`}>
+      <section class="page">
+        <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
+        <SectionHeader en={categoryLabel?.en ?? ""} cn={categoryLabel?.cn ?? ""} count={categoryProducts.length} />
+        <div class="products-grid">
+          {categoryProducts.map((p, index) => (
+            <ProductCard
+              id={String(categoryProducts.length - index).padStart(3, "0")}
+              href={`/market/${p.slug}`}
+              titleCn={p.title}
+              titleEn={p.shortDescription ?? ""}
+              category={getCategorySlug(p)}
+              status={p.status}
+              price={formatPrice(p)}
+              coverImage={p.coverImage?.url}
+            />
           ))}
+          {categoryProducts.length === 0 && (
+            <div class="empty-state">No items in this category yet.</div>
+          )}
         </div>
-      </div>
-    )}
+      </section>
+    </Layout>
+  ) : (
+    <Layout title={`${product?.title} | MARKET`} description={product?.shortDescription ?? product?.title ?? ""}>
+      <article class="product-detail">
+        <div class="product-head">
+          <div class="product-label">PRODUCT · #{specimenId}</div>
+          <h1 class="product-title">{product?.title}</h1>
+          <div class="product-meta-row">
+            {product?.productCode && (
+              <span class="meta-item">CODE: {product.productCode}</span>
+            )}
+            {categoryTitle && (
+              <span class="meta-item">CAT: {categoryTitle}</span>
+            )}
+            {product?.status && (
+              <span class={`meta-item product-status ${statusClass}`}>
+                STATUS: {statusLabel[product.status] ?? product.status.toUpperCase()}
+              </span>
+            )}
+          </div>
+        </div>
 
-    {product.description && (
-      <div class="product-content">
-        <RichText content={product.description as { root: unknown }} />
-      </div>
-    )}
+        {product?.coverImage && (
+          <div class="product-cover">
+            <img src={product.coverImage.url} alt={product.coverImage.alt || product.title} />
+          </div>
+        )}
 
-    <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
-  </article>
-</Layout>
+        {formattedPrice && (
+          <div class="product-price-row">
+            <span class="product-price">{formattedPrice}</span>
+          </div>
+        )}
+
+        {tagList.length > 0 && (
+          <div class="product-tags">
+            <div class="tags-title">TAGS</div>
+            <div class="tags-list">
+              {tagList.map((tag) => (
+                <span class="tag-chip">{getTagName(tag)}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {product?.description && (
+          <div class="product-content">
+            <RichText content={product.description as { root: unknown }} />
+          </div>
+        )}
+
+        <a href="/market" class="back-link">[ BACK TO MARKET ]</a>
+      </article>
+    </Layout>
+  )
+}
 
 <style>
+.page {
+  padding: var(--space-16) 0;
+}
+
+.back-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--paper-bone);
+  text-decoration: none;
+  margin-bottom: var(--space-8);
+}
+
+.back-link:hover {
+  color: var(--mineral-copper);
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.empty-state {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  padding: var(--space-12) 0;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
 .product-detail {
   padding: var(--space-16) 0;
   max-width: 680px;
@@ -258,17 +349,9 @@ const tagList = Array.isArray(product.tags) ? product.tags : [];
   text-decoration: underline;
 }
 
-.back-link {
-  display: inline-block;
-  margin-top: var(--space-12);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  color: var(--paper-bone);
-  text-decoration: none;
-  transition: opacity var(--duration-base) var(--ease-out);
-}
-
-.back-link:hover {
-  opacity: 0.7;
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

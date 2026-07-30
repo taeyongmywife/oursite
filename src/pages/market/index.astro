@@ -3,68 +3,46 @@ import Layout from "../../layouts/Layout.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import CategoryCard from "../../components/CategoryCard.astro";
 import ProductCard from "../../components/cards/ProductCard.astro";
-import { getProducts, type PayloadProduct } from "../../lib/payload";
+import { getProducts, getMarketCategories, type PayloadProduct, type PayloadMarketCategory } from "../../lib/payload";
 
 const products = await getProducts();
+const categories = await getMarketCategories();
 
-const getCategorySlug = (product: PayloadProduct): string => {
-  const cat = product.category;
+// Presentation layer: CMS stores English titles only.
+// Map slug -> bilingual labels + count unit. Extend as new market categories appear.
+const labelMap: Record<string, { cn: string; en: string; unit: string }> = {
+  toolkit: { cn: "工具", en: "TOOLS", unit: "件" },
+  knowledge: { cn: "知识", en: "KNOWLEDGE", unit: "卷" },
+  works: { cn: "作品", en: "WORKS", unit: "帧" },
+};
+
+const getCategorySlug = (p: PayloadProduct): string => {
+  const cat = p.category;
   if (typeof cat === "object" && cat !== null) return cat.slug;
   return "";
 };
 
-const getCategoryTitle = (product: PayloadProduct): string => {
-  const cat = product.category;
-  if (typeof cat === "object" && cat !== null) return cat.title;
-  return "";
+const formatPrice = (p: PayloadProduct): string => {
+  if (p.price === null || p.price === undefined) return "";
+  const currency = p.currency ?? "";
+  return currency ? `${currency} ${p.price}` : `${p.price}`;
 };
 
-const formatPrice = (product: PayloadProduct): string => {
-  if (product.price === null || product.price === undefined) return "";
-  const currency = product.currency ?? "";
-  return currency ? `${currency} ${product.price}` : `${product.price}`;
-};
-
-// Count products by fixed market category
-const toolsCount = products.filter((p) => getCategorySlug(p) === "tools").length;
-const knowledgeCount = products.filter((p) => getCategorySlug(p) === "knowledge").length;
-const worksCount = products.filter((p) => getCategorySlug(p) === "works").length;
-
-const categories = [
-  {
-    id: "001",
-    titleCn: "工具",
-    titleEn: "Tools",
-    description: "精心选品的数字硬件与生产力工具",
-    descriptionEn: "Curated digital hardware & productivity tools",
-    count: toolsCount,
-    unit: "件",
-    category: "Tools",
-    href: "/market/tools",
-  },
-  {
-    id: "002",
-    titleCn: "知识",
-    titleEn: "Knowledge",
-    description: "深度思考和知识沉淀",
-    descriptionEn: "Deep thinking and knowledge crystallization",
-    count: knowledgeCount,
-    unit: "卷",
-    category: "Knowledge",
-    href: "/market/knowledge",
-  },
-  {
-    id: "003",
-    titleCn: "作品",
-    titleEn: "Works",
-    description: "创意作品和数字艺术品",
-    descriptionEn: "Creative projects and digital artifacts",
-    count: worksCount,
-    unit: "帧",
-    category: "Works",
-    href: "/market/works",
-  },
-];
+const categoryCards = categories.map((cat: PayloadMarketCategory, i) => {
+  const label = labelMap[cat.slug] ?? { cn: cat.title, en: cat.title.toUpperCase(), unit: "件" };
+  const count = products.filter((p) => getCategorySlug(p) === cat.slug).length;
+  return {
+    id: String(i + 1).padStart(3, "0"),
+    titleCn: label.cn,
+    titleEn: label.en,
+    description: cat.description ?? label.cn,
+    descriptionEn: cat.title,
+    count,
+    unit: label.unit,
+    category: cat.slug,
+    href: `/market/${cat.slug}`,
+  };
+});
 
 // Recently added (latest 5 by updatedAt)
 const featuredProducts = products.slice(0, 5);
@@ -75,10 +53,10 @@ const productIndex = new Map(products.map((p, i) => [p.slug, i]));
   <section class="page">
     <SectionHeader en="MARKET" cn="策展商店" count={products.length} />
 
-    <!-- Visual Center: Categories -->
+    <!-- Visual Center: Categories (dynamic from CMS) -->
     <div class="categories-section">
       <div class="categories-grid">
-        {categories.map((cat) => (
+        {categoryCards.map((cat) => (
           <CategoryCard {...cat} />
         ))}
       </div>
@@ -98,7 +76,7 @@ const productIndex = new Map(products.map((p, i) => [p.slug, i]));
               href={`/market/${product.slug}`}
               titleCn={product.title}
               titleEn={product.shortDescription ?? ""}
-              category={getCategoryTitle(product)}
+              category={getCategorySlug(product)}
               status={product.status}
               price={formatPrice(product)}
               coverImage={product.coverImage?.url}

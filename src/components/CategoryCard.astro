@@ -7,18 +7,20 @@ interface Props {
   descriptionEn?: string;
   count: number;
   unit: string;
-  category: 'Tools' | 'Knowledge' | 'Works';
+  category: string;
   href: string;
 }
 
 const { id, titleCn, titleEn, description, descriptionEn, count, unit, category, href } = Astro.props;
 
-// Category icons: Unified flat/2D minimalist style
-const icons = {
-  Tools: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20industrial%20gear%20technical%20drawing%20white%20lines%20on%20black%20background&image_size=square',
-  Knowledge: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20archival%20document%20scroll%20white%20lines%20on%20black%20background&image_size=square',
-  Works: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20framed%20art%20specimen%20white%20lines%20on%20black%20background&image_size=square'
+// Category icons keyed by CMS slug. Map grows as new market categories are added.
+const icons: Record<string, string> = {
+  toolkit: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20industrial%20gear%20technical%20drawing%20white%20lines%20on%20black%20background&image_size=square',
+  knowledge: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20archival%20document%20scroll%20white%20lines%20on%20black%20background&image_size=square',
+  works: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=minimalist%20flat%202d%20vector%20icon%20framed%20art%20specimen%20white%20lines%20on%20black%20background&image_size=square'
 };
+
+const icon = icons[category] ?? '';
 ---
 
 <a href={href} class={`category-card category-${category.toLowerCase()}`}>
@@ -42,7 +44,7 @@ const icons = {
       </div>
 
       <div class="icon-container">
-        <img src={icons[category]} alt={category} class="category-icon" />
+        {icon && <img src={icon} alt={category} class="category-icon" />}
       </div>
     </div>
   </div>

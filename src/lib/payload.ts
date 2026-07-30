@@ -301,3 +301,40 @@ export async function getProductBySlug(slug: string): Promise<PayloadProduct | n
     return null;
   }
 }
+
+export interface PayloadMarketCategory {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+}
+
+export async function getMarketCategories(): Promise<PayloadMarketCategory[]> {
+  try {
+    const res = await fetch(`${payloadUrl}/api/categories?depth=1&limit=100`);
+
+    if (!res.ok) {
+      console.warn(`[payload] Categories fetch returned ${res.status}`);
+      return [];
+    }
+
+    const { docs } = await res.json();
+
+    return (docs as Array<Record<string, unknown>>)
+      .filter((c) => {
+        const parent = c.parent as { slug?: string } | number | null | undefined;
+        if (!parent) return false;
+        if (typeof parent === "object") return parent.slug === "market";
+        return false;
+      })
+      .map((c) => ({
+        id: c.id as number,
+        title: c.title as string,
+        slug: c.slug as string,
+        description: (c.description as string) ?? null,
+      }));
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch market categories: ${err}`);
+    return [];
+  }
+}
