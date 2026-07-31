@@ -15,6 +15,8 @@ interface PayloadPost {
   tagBox: Array<number | { id: number; title: string; slug: string }>;
   author: number;
   knowledgeIndex: Array<number | { id: number; term: string; slug: string }>;
+  series: number | { id: number; title: string; slug: string } | null;
+  logNumber: number | null;
   cover: unknown;
 }
 

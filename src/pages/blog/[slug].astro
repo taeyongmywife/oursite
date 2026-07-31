@@ -5,6 +5,7 @@ import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
 import { getPostBySlug, getPosts, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
@@ -73,6 +74,8 @@ const coverUrl =
     </div>
 
     <KnowledgeReference entries={knowledgeEntries} />
+
+    <SeriesNav post={post} />
 
     <ChoicePanel
       prompt="Close this file."

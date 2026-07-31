@@ -4,6 +4,7 @@ import ChoicePanel from "../../components/ChoicePanel.astro";
 import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
+import SeriesNav from "../../components/SeriesNav.astro";
 import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
@@ -80,6 +81,8 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
         </div>
       );
     })()}
+
+    <SeriesNav post={fragment} />
 
     <ChoicePanel
       prompt="你看向她，眼神里带着"
