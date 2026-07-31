@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { getCollection } from 'astro:content';
 import RockCard from "../components/RockCard.astro";
+import SearchBar from "../components/SearchBar.astro";
 
 const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 let posts = [];
@@ -47,6 +48,8 @@ const currentId = String(fragments.length).padStart(4, "0");
     <a class="hero-cta" href="/fragments">[▸ ENTER THE CABINET]</a>
     <a href="/between" class="between-easter-egg" aria-label="between">between</a>
   </section>
+
+  <SearchBar />
 
   <section class="recent">
     <div class="recent-title">RECENT CRYSTALLIZATION</div>
