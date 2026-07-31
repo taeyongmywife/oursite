@@ -8,7 +8,7 @@ import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPostBySlug, getPosts, type PayloadPost } from "../../lib/payload";
+import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -35,16 +35,10 @@ const categoryLabel =
     ? post.category.title
     : String(post.category);
 
-const knowledgeEntries =
-  Array.isArray(post.knowledgeIndex)
-    ? post.knowledgeIndex.map((ki) => {
-        if (typeof ki === "object" && ki !== null) {
-          return { term: ki.term, slug: ki.slug, summary: ki.summary ?? undefined };
-        }
-        return null;
-      })
-      .filter(Boolean)
-    : [];
+const knowledgeList = await getKnowledgeList();
+const knowledgeMap = buildKnowledgeMap(knowledgeList);
+// 自动扫描正文：基于 term + aliases 命中，取代手动 knowledgeIndex 关联
+const knowledgeEntries = getMatchedKnowledge(post.content, knowledgeList);
 
 const coverUrl =
   post.cover && typeof post.cover === "object" && post.cover !== null
@@ -72,7 +66,7 @@ const coverUrl =
     )}
 
     <div class="prose">
-      <RichText content={post.content as { root: unknown }} />
+      <RichText content={post.content as { root: unknown }} knowledgeMap={knowledgeMap} />
     </div>
 
     <KnowledgeReference entries={knowledgeEntries} />

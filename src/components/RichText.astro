@@ -30,17 +30,28 @@ function escapeHtml(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
-let knowledgeRegex: RegExp | null = null;
+const regexCache = new WeakMap<Record<string, string>, RegExp>();
 function buildKnowledgeRegex(km: Record<string, string>): RegExp {
-  if (knowledgeRegex) return knowledgeRegex;
+  const cached = regexCache.get(km);
+  if (cached) return cached;
+
   const terms = Object.keys(km).sort((a, b) => b.length - a.length);
   if (terms.length === 0) {
-    knowledgeRegex = /(?!)/; // never matches
-    return knowledgeRegex;
+    const never = /(?!)/; // never matches
+    regexCache.set(km, never);
+    return never;
   }
-  const escaped = terms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  knowledgeRegex = new RegExp(`(${escaped.join("|")})`, "gi");
-  return knowledgeRegex;
+
+  // 纯 ASCII 词加前后边界，避免 "C" / "SSR" 误匹配进单词内部；
+  // 含 CJK 或符号的词不加边界（CJK 无 \b，且常与拉丁字相邻，需整段匹配）。
+  const escaped = terms.map((t) => {
+    const e = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return /^[A-Za-z0-9]+$/.test(t) ? `(?<![A-Za-z0-9])${e}(?![A-Za-z0-9])` : e;
+  });
+
+  const regex = new RegExp(`(${escaped.join("|")})`, "gi");
+  regexCache.set(km, regex);
+  return regex;
 }
 
 function applyKnowledgeLinks(text: string, km: Record<string, string>): string {

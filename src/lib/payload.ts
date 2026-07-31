@@ -313,7 +313,15 @@ export async function getKnowledgeBySlug(slug: string): Promise<Record<string, u
   }
 }
 
-export async function getKnowledgeList(): Promise<Array<{ id: number; term: string; slug: string }>> {
+export interface KnowledgeItem {
+  id: number;
+  term: string;
+  slug: string;
+  summary: string | null;
+  aliases: string[];
+}
+
+export async function getKnowledgeList(): Promise<KnowledgeItem[]> {
   try {
     const res = await fetch(`${payloadUrl}/api/knowledge-index?limit=100&depth=0`);
 
@@ -323,15 +331,84 @@ export async function getKnowledgeList(): Promise<Array<{ id: number; term: stri
     }
 
     const { docs } = await res.json();
-    return docs.map((d: Record<string, unknown>) => ({
-      id: d.id as number,
-      term: d.term as string,
-      slug: d.slug as string,
-    }));
+    return docs.map((d: Record<string, unknown>) => {
+      const aliasesRaw = (d.aliases as Array<{ alias?: string }> | undefined) ?? [];
+      const aliases = aliasesRaw
+        .map((a) => (a && typeof a.alias === "string" ? a.alias : ""))
+        .map((s) => s.trim())
+        .filter(Boolean);
+      return {
+        id: d.id as number,
+        term: d.term as string,
+        slug: d.slug as string,
+        summary: (d.summary as string | null) ?? null,
+        aliases,
+      };
+    });
   } catch (err) {
     console.warn(`[payload] Failed to fetch knowledge list: ${err}`);
     return [];
   }
+}
+
+/**
+ * 构建 term + aliases → slug 的查找表（全部小写）。
+ * 供 RichText 内联自动链接与文章底部「关联知识」块共用。
+ */
+export function buildKnowledgeMap(list: KnowledgeItem[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const k of list) {
+    const termKey = k.term.trim().toLowerCase();
+    if (termKey) map[termKey] = k.slug;
+    for (const alias of k.aliases) {
+      const key = alias.trim().toLowerCase();
+      if (key) map[key] = k.slug;
+    }
+  }
+  return map;
+}
+
+function lexicalNodeToText(node: unknown): string {
+  if (!node || typeof node !== "object") return "";
+  const n = node as Record<string, unknown>;
+  if (typeof n.text === "string") return n.text;
+  if (Array.isArray(n.children)) {
+    return (n.children as unknown[]).map(lexicalNodeToText).join("");
+  }
+  return "";
+}
+
+function extractContentText(content: unknown): string {
+  if (!content) return "";
+  const root = (content as Record<string, unknown>)?.root ?? content;
+  return lexicalNodeToText(root);
+}
+
+/**
+ * 扫描文章正文（Lexical 富文本），返回正文中实际出现过的知识词条。
+ * 匹配基于 term 与 aliases（不区分大小写），用于自动生成「关联知识」块，
+ * 取代原先手动在 Posts 上勾选 knowledgeIndex 的方式。
+ */
+export function getMatchedKnowledge(
+  content: unknown,
+  list: KnowledgeItem[]
+): Array<{ term: string; slug: string; summary: string | null }> {
+  const text = extractContentText(content).toLowerCase();
+  if (!text) return [];
+
+  const seen = new Set<string>();
+  const out: Array<{ term: string; slug: string; summary: string | null }> = [];
+
+  for (const k of list) {
+    const keys = [k.term, ...k.aliases]
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (keys.some((key) => text.includes(key)) && !seen.has(k.slug)) {
+      seen.add(k.slug);
+      out.push({ term: k.term, slug: k.slug, summary: k.summary });
+    }
+  }
+  return out;
 }
 
 // ===========================

@@ -1,7 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import RichText from "../../components/RichText.astro";
-import { getKnowledgeBySlug } from "../../lib/payload";
+import { getKnowledgeBySlug, getKnowledgeList, buildKnowledgeMap } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
@@ -32,6 +32,11 @@ const term = entry.term as string;
 const summary = entry.summary as string | null;
 const relatedTerms = entry.relatedTerms as Array<{ term: string; slug: string }> | null;
 const relatedCollections = entry.relatedCollections as Array<{ title: string; slug: string }> | null;
+
+// 交叉链接：本文正文里出现的其他知识词条自动加超链接（排除自身，避免自链接）
+const knowledgeList = await getKnowledgeList();
+const knowledgeMap = buildKnowledgeMap(knowledgeList);
+delete knowledgeMap[term.trim().toLowerCase()];
 ---
 
 <Layout title={`${term} | KNOWLEDGE`} description={summary ?? term}>
@@ -49,7 +54,7 @@ const relatedCollections = entry.relatedCollections as Array<{ title: string; sl
 
     {entry.content && (
       <div class="knowledge-content">
-        <RichText content={entry.content as { root: unknown }} />
+        <RichText content={entry.content as { root: unknown }} knowledgeMap={knowledgeMap} />
       </div>
     )}
 

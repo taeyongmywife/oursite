@@ -6,7 +6,7 @@ import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
+import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const experiments = await getPosts("experiment");
@@ -33,10 +33,8 @@ const statusLabel =
     : "crystallizing";
 
 const knowledgeEntries = await getKnowledgeList();
-const knowledgeMap: Record<string, string> = {};
-for (const k of knowledgeEntries) {
-  knowledgeMap[k.term.toLowerCase()] = k.slug;
-}
+const knowledgeMap = buildKnowledgeMap(knowledgeEntries);
+const matchedKnowledge = getMatchedKnowledge(experiment.content, knowledgeEntries);
 
 const seoTitle = experiment.seoTitle ?? experiment.title;
 const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.title;
@@ -65,23 +63,16 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
       <RichText content={experiment.content} knowledgeMap={knowledgeMap} />
     </div>
 
-    {(() => {
-      const ki = experiment.knowledgeIndex;
-      if (!ki || (Array.isArray(ki) && ki.length === 0)) return null;
-      const entries = Array.isArray(ki) ? ki : [];
-      return (
-        <div class="knowledge-related">
-          <div class="related-title">RELATED KNOWLEDGE</div>
-          <div class="related-list">
-            {entries.map((k) => {
-              const slug = typeof k === "object" ? k.slug : String(k);
-              const term = typeof k === "object" ? k.term : slug;
-              return <a href={`/knowledge/${slug}`} class="related-tag">{term}</a>;
-            })}
-          </div>
+    {matchedKnowledge.length > 0 && (
+      <div class="knowledge-related">
+        <div class="related-title">RELATED KNOWLEDGE</div>
+        <div class="related-list">
+          {matchedKnowledge.map((k) => (
+            <a href={`/knowledge/${k.slug}`} class="related-tag">{k.term}</a>
+          ))}
         </div>
-      );
-    })(    )}
+      </div>
+    )}
 
     <TagBoxChips post={experiment} />
 
