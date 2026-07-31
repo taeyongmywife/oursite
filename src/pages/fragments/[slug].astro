@@ -5,6 +5,7 @@ import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import TagBoxChips from "../../components/TagBoxChips.astro";
 import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
@@ -81,6 +82,8 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
         </div>
       );
     })()}
+
+    <TagBoxChips post={fragment} />
 
     <SeriesNav post={fragment} />
 

@@ -6,6 +6,7 @@ import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import TagBoxChips from "../../components/TagBoxChips.astro";
 import { getPostBySlug, getPosts, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
@@ -74,6 +75,8 @@ const coverUrl =
     </div>
 
     <KnowledgeReference entries={knowledgeEntries} />
+
+    <TagBoxChips post={post} />
 
     <SeriesNav post={post} />
 

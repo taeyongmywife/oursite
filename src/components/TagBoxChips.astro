@@ -1,0 +1,67 @@
+---
+import type { PayloadPost } from "../lib/payload";
+
+interface Props {
+  post: PayloadPost;
+}
+
+const { post } = Astro.props;
+
+// post.tagBox 在 depth=1 下为对象数组（tagbox 集合已公开可读）；
+// 防御式处理裸 id 与缺失，避免出现无效链接。
+const themes = (Array.isArray(post.tagBox) ? post.tagBox : [])
+  .map((t) => (typeof t === "object" && t !== null ? { title: t.title, slug: t.slug } : null))
+  .filter((t): t is { title: string; slug: string } => Boolean(t) && Boolean(t?.slug));
+
+const hasThemes = themes.length > 0;
+---
+{hasThemes && (
+  <div class="themes-block">
+    <div class="themes-title">THEMES · 主题盒子</div>
+    <div class="themes-list">
+      {themes.map((t) => (
+        <a href={`/tagbox/${t.slug}`} class="theme-chip">{t.title}</a>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  .themes-block {
+    margin: var(--space-8) 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--rock-basalt);
+  }
+
+  .themes-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rock-granite);
+    margin-bottom: var(--space-3);
+  }
+
+  .themes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .theme-chip {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--paper-bone);
+    border: var(--border-solid);
+    padding: var(--space-1) var(--space-3);
+    text-decoration: none;
+    transition: border-color var(--duration-base) var(--ease-out),
+      color var(--duration-base) var(--ease-out);
+  }
+
+  .theme-chip:hover {
+    border-color: var(--mineral-copper);
+    color: var(--mineral-copper);
+  }
+</style>

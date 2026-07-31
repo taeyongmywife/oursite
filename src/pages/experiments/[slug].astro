@@ -4,6 +4,7 @@ import ChoicePanel from "../../components/ChoicePanel.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
+import TagBoxChips from "../../components/TagBoxChips.astro";
 import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 
 export async function getStaticPaths() {
@@ -80,6 +81,8 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
         </div>
       );
     })(    )}
+
+    <TagBoxChips post={experiment} />
 
     <SeriesNav post={experiment} />
 
