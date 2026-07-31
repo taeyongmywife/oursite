@@ -6,6 +6,7 @@ import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
+import RelatedContent from "../../components/RelatedContent.astro";
 import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
@@ -86,6 +87,8 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
     <TagBoxChips post={fragment} />
 
     <SeriesNav post={fragment} />
+
+    <RelatedContent post={fragment} />
 
     <ChoicePanel
       prompt="你看向她，眼神里带着"

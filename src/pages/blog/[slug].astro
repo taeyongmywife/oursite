@@ -7,6 +7,7 @@ import RichText from "../../components/RichText.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
+import RelatedContent from "../../components/RelatedContent.astro";
 import { getPostBySlug, getPosts, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
@@ -79,6 +80,8 @@ const coverUrl =
     <TagBoxChips post={post} />
 
     <SeriesNav post={post} />
+
+    <RelatedContent post={post} />
 
     <ChoicePanel
       prompt="Close this file."

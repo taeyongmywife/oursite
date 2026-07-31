@@ -1,0 +1,81 @@
+---
+import { getRelatedPosts, type PayloadPost } from "../lib/payload";
+
+interface Props {
+  post: PayloadPost;
+  limit?: number;
+}
+
+const { post, limit = 4 } = Astro.props;
+
+// 相关文章基于共享 TagBox + 同 Series 加权计算（见 payload.ts getRelatedPosts）。
+// 防御式：无关联文章时整块不渲染。
+const related = await getRelatedPosts(post, limit);
+const hasRelated = related.length > 0;
+---
+
+{hasRelated && (
+  <section class="related-block" aria-label="Related reading">
+    <div class="related-title">RELATED · 相关阅读</div>
+    <ul class="related-list">
+      {related.map((r) => (
+        <li class="related-item">
+          <a href={`/blog/${r.slug}`} class="related-link">
+            <span class="related-arrow">→</span>
+            <span class="related-name">{r.title}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<style>
+  .related-block {
+    margin: var(--space-8) 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--rock-basalt);
+  }
+
+  .related-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rock-granite);
+    margin-bottom: var(--space-3);
+  }
+
+  .related-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .related-link {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    color: var(--paper-bone);
+    transition: color var(--duration-base) var(--ease-out);
+  }
+
+  .related-arrow {
+    font-family: var(--font-mono);
+    color: var(--rock-granite);
+    transition: color var(--duration-base) var(--ease-out);
+  }
+
+  .related-link:hover {
+    color: var(--mineral-copper);
+  }
+
+  .related-link:hover .related-arrow {
+    color: var(--mineral-copper);
+  }
+</style>

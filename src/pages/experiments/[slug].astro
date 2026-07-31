@@ -5,6 +5,7 @@ import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
+import RelatedContent from "../../components/RelatedContent.astro";
 import { getPosts, getPostBySlug, getKnowledgeList } from "../../lib/payload";
 
 export async function getStaticPaths() {
@@ -85,6 +86,8 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
     <TagBoxChips post={experiment} />
 
     <SeriesNav post={experiment} />
+
+    <RelatedContent post={experiment} />
 
     <ChoicePanel
       prompt="Select your next move."

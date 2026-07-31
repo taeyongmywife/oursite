@@ -203,6 +203,78 @@ export async function getPostsByTagBox(slug: string): Promise<PayloadPost[]> {
   });
 }
 
+// ===========================
+// Related Content（相关文章）
+// ===========================
+
+export interface RelatedPost {
+  title: string;
+  slug: string;
+  category: string | null; // category slug，便于后续样式/路由区分
+}
+
+function tagBoxSlugsOf(post: PayloadPost): string[] {
+  const tb = Array.isArray(post.tagBox) ? post.tagBox : [];
+  return tb
+    .map((t) => (typeof t === "object" && t !== null ? t.slug : ""))
+    .filter(Boolean);
+}
+
+function seriesSlugOf(post: PayloadPost): string | null {
+  const s = post.series;
+  if (!s) return null;
+  if (typeof s === "object" && s !== null) return s.slug;
+  return null;
+}
+
+/**
+ * 计算与当前文章相关的其他文章：
+ * - 共享 TagBox（主题盒子）数量加权（每个 +2）
+ * - 同系列（Series）额外加权（+5）
+ * 按得分降序、再按发布时间降序，取前 limit 篇。
+ * 链接统一走 /blog/[slug]（所有文章通用路由）。
+ */
+export async function getRelatedPosts(
+  current: PayloadPost,
+  limit = 4
+): Promise<RelatedPost[]> {
+  const all = await getPosts();
+  const curTags = tagBoxSlugsOf(current);
+  const curSeries = seriesSlugOf(current);
+
+  const scored: Array<{ post: PayloadPost; score: number }> = [];
+
+  for (const p of all) {
+    if (p.slug === current.slug) continue;
+    if (p.status !== "published") continue;
+
+    let score = 0;
+    const shared = tagBoxSlugsOf(p).filter((t) => curTags.includes(t)).length;
+    score += shared * 2;
+    if (curSeries && seriesSlugOf(p) === curSeries) score += 5;
+
+    if (score > 0) {
+      scored.push({ post: p, score });
+    }
+  }
+
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return (
+      new Date(b.post.createdAt).getTime() - new Date(a.post.createdAt).getTime()
+    );
+  });
+
+  return scored.slice(0, limit).map(({ post }) => ({
+    title: post.title,
+    slug: post.slug,
+    category:
+      typeof post.category === "object" && post.category !== null
+        ? post.category.slug
+        : null,
+  }));
+}
+
 export async function getPostBySlug(slug: string): Promise<PayloadPost | null> {
   try {
     const res = await fetch(
