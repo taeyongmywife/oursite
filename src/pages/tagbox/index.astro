@@ -1,0 +1,115 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { getTagBoxes, getPosts } from "../../lib/payload";
+
+const tagBoxes = await getTagBoxes();
+const posts = await getPosts();
+
+const countBySlug: Record<string, number> = {};
+for (const p of posts) {
+  const tb = Array.isArray(p.tagBox) ? p.tagBox : [];
+  for (const t of tb) {
+    const slug = typeof t === "object" ? t.slug : "";
+    if (slug) countBySlug[slug] = (countBySlug[slug] ?? 0) + 1;
+  }
+}
+---
+
+<Layout
+  title="TAGBOX | BubbleCrisp"
+  description="主题盒子——以主题而非时间线探索 BubbleCrisp 的全部内容。"
+>
+  <section class="page">
+    <SectionHeader en="TAGBOX" cn="主题盒子" count={tagBoxes.length} />
+    <p class="section-intro">
+      不按时间，按主题。每个盒子收一类内容：AI、CMS、Database、Design、Business……点进去看全部相关文章。
+    </p>
+
+    {tagBoxes.length > 0 ? (
+      <div class="tb-grid">
+        {tagBoxes.map((tb) => (
+          <a href={`/tagbox/${tb.slug}`} class="tb-card">
+            <div class="tb-head">
+              <span class="tb-name">{tb.title}</span>
+              <span class="tb-count">{(countBySlug[tb.slug] ?? 0).toString().padStart(2, "0")} 篇</span>
+            </div>
+            {tb.description && <p class="tb-desc">{tb.description}</p>}
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="empty">暂无主题盒子。</div>
+    )}
+  </section>
+</Layout>
+
+<style>
+.page {
+  padding: var(--space-16) 0;
+}
+
+.section-intro {
+  margin: 0 0 var(--space-8) 0;
+  color: var(--paper-rust);
+}
+
+.tb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.tb-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6);
+  border: var(--border-solid);
+  background: rgba(10, 10, 12, 0.72);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+}
+
+.tb-card:hover {
+  border-color: var(--mineral-copper);
+  transform: translateY(-2px);
+}
+
+.tb-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.tb-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--mineral-copper);
+}
+
+.tb-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+}
+
+.tb-desc {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--paper-bone);
+  opacity: 0.78;
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--rock-granite);
+  text-align: center;
+  padding: var(--space-16) 0;
+}
+</style>

@@ -1,0 +1,68 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import TagBox from "../../components/TagBox.astro";
+import { getTagBoxes, getPostsByTagBox } from "../../lib/payload";
+
+export async function getStaticPaths() {
+  const tagBoxes = await getTagBoxes();
+  return tagBoxes.map((tb) => ({
+    params: { slug: tb.slug },
+    props: { tagBox: tb },
+  }));
+}
+
+const { tagBox } = Astro.props;
+const posts = await getPostsByTagBox(tagBox.slug);
+const postInfos = posts.map((p) => ({
+  title: p.title,
+  slug: p.slug,
+  createdAt: p.createdAt,
+}));
+---
+
+<Layout title={`${tagBox.title} | BubbleCrisp`} description={tagBox.description ?? undefined}>
+  <section class="page">
+    <SectionHeader en={tagBox.title.toUpperCase()} cn="主题盒子" count={posts.length} />
+    <p class="section-intro">
+      挂在「{tagBox.title}」下的全部文章。文章可能同时属于多个主题盒子。
+    </p>
+
+    {posts.length > 0 ? (
+      <div class="tag-group">
+        <TagBox
+          tag={{ id: tagBox.id, title: tagBox.title, slug: tagBox.slug }}
+          posts={postInfos}
+          basePath="/blog"
+        />
+      </div>
+    ) : (
+      <div class="empty">暂无文章挂在「{tagBox.title}」下。</div>
+    )}
+  </section>
+</Layout>
+
+<style>
+.page {
+  padding: var(--space-16) 0;
+}
+
+.section-intro {
+  margin: 0 0 var(--space-8) 0;
+  color: var(--paper-rust);
+}
+
+.tag-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--rock-granite);
+  text-align: center;
+  padding: var(--space-16) 0;
+}
+</style>

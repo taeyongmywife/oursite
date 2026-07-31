@@ -2,10 +2,10 @@
 import Layout from "../../layouts/Layout.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import TagBox from "../../components/TagBox.astro";
-import { getPosts, groupPostsByTag } from "../../lib/payload";
+import { getPosts, groupPostsByTagBox } from "../../lib/payload";
 
 const experiments = await getPosts("experiment");
-const tagGroups = groupPostsByTag(experiments);
+const tagGroups = groupPostsByTagBox(experiments);
 ---
 
 <Layout title="EXPERIMENTS · IN PROGRESS | BubbleCrisp" description="Experiment Lab - A record of ongoing projects.">

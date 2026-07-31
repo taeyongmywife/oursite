@@ -12,7 +12,7 @@ interface PayloadPost {
   updatedAt: string;
   publishedAt: string | null;
   featured: boolean;
-  tags: Array<number | { id: number; title: string; slug: string }>;
+  tagBox: Array<number | { id: number; title: string; slug: string }>;
   author: number;
   knowledgeIndex: Array<number | { id: number; term: string; slug: string }>;
   cover: unknown;
@@ -25,7 +25,6 @@ interface PayloadCategory {
 }
 
 let cachedCategoryMap: Record<string, number> | null = null;
-let cachedTagsMap: Record<number, { id: number; title: string; slug: string }> | null = null;
 
 async function getCategoryMap(): Promise<Record<string, number>> {
   if (cachedCategoryMap) return cachedCategoryMap;
@@ -49,32 +48,6 @@ async function getCategoryMap(): Promise<Record<string, number>> {
     return map;
   } catch (err) {
     console.warn(`[payload] Failed to fetch categories: ${err}`);
-    return {};
-  }
-}
-
-export async function getTagsMap(): Promise<Record<number, { id: number; title: string; slug: string }>> {
-  if (cachedTagsMap) return cachedTagsMap;
-
-  try {
-    const res = await fetch(`${payloadUrl}/api/tags?limit=100`);
-
-    if (!res.ok) {
-      console.warn(`[payload] Tags fetch returned ${res.status}`);
-      return {};
-    }
-
-    const { docs } = await res.json();
-    const map: Record<number, { id: number; title: string; slug: string }> = {};
-
-    for (const tag of docs) {
-      map[tag.id] = { id: tag.id, title: tag.title, slug: tag.slug };
-    }
-
-    cachedTagsMap = map;
-    return map;
-  } catch (err) {
-    console.warn(`[payload] Failed to fetch tags: ${err}`);
     return {};
   }
 }
@@ -126,11 +99,15 @@ export interface TagGroup {
   posts: Array<{ title: string; slug: string; createdAt: string }>;
 }
 
-export function groupPostsByTag(posts: PayloadPost[]): TagGroup[] {
+/**
+ * 按 TagBox（主题盒子）对文章分组，用于 /fragments、/experiments 等分区页内分组。
+ * 一篇文章可挂多个 TagBox，因此可能出现在多个分组里。
+ */
+export function groupPostsByTagBox(posts: PayloadPost[]): TagGroup[] {
   const grouped: Record<string, TagGroup> = {};
 
   for (const post of posts) {
-    const postTags = Array.isArray(post.tags) ? post.tags : [];
+    const postTags = Array.isArray(post.tagBox) ? post.tagBox : [];
 
     if (postTags.length === 0) {
       const key = "__untagged__";
@@ -172,6 +149,55 @@ export function groupPostsByTag(posts: PayloadPost[]): TagGroup[] {
     const countDiff = b.posts.length - a.posts.length;
     if (countDiff !== 0) return countDiff;
     return a.tag.title.localeCompare(b.tag.title);
+  });
+}
+
+// ===========================
+// TagBox（主题盒子，文章主探索入口）
+// ===========================
+
+export interface PayloadTagBox {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover: unknown;
+}
+
+export async function getTagBoxes(): Promise<PayloadTagBox[]> {
+  try {
+    const res = await fetch(`${payloadUrl}/api/tagbox?limit=100&depth=0`);
+
+    if (!res.ok) {
+      console.warn(`[payload] TagBox fetch returned ${res.status}`);
+      return [];
+    }
+
+    const { docs } = await res.json();
+    return (docs as Array<Record<string, unknown>>).map((d) => ({
+      id: d.id as number,
+      title: d.title as string,
+      slug: d.slug as string,
+      description: (d.description as string) ?? null,
+      cover: d.cover ?? null,
+    }));
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch tagbox: ${err}`);
+    return [];
+  }
+}
+
+export async function getTagBoxBySlug(slug: string): Promise<PayloadTagBox | null> {
+  const boxes = await getTagBoxes();
+  return boxes.find((b) => b.slug === slug) ?? null;
+}
+
+/** 返回挂了指定 TagBox 的全部文章（跨分区）。 */
+export async function getPostsByTagBox(slug: string): Promise<PayloadPost[]> {
+  const posts = await getPosts();
+  return posts.filter((p) => {
+    const tb = Array.isArray(p.tagBox) ? p.tagBox : [];
+    return tb.some((t) => (typeof t === "object" ? t.slug : "") === slug);
   });
 }
 
