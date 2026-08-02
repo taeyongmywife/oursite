@@ -2,8 +2,6 @@
 import Layout from "../layouts/Layout.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { getCollection } from 'astro:content';
-import RockCard from "../components/RockCard.astro";
-import SearchBar from "../components/SearchBar.astro";
 
 const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 let posts = [];
@@ -26,6 +24,19 @@ const latestFragments = [...fragments].sort(
 );
 
 const currentId = String(fragments.length).padStart(4, "0");
+
+// 最近文章按创建时间倒序，取前 6 条
+const recentPosts = [...posts].sort(
+  (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+).slice(0, 6);
+
+// CMS 分类 slug → 前台路由段存在单复数差异
+// (category slug 为单数 experiment/fragment/blog,路由为复数 experiments/fragments/blog)
+const categoryToPath: Record<string, string> = {
+  experiment: "experiments",
+  fragment: "fragments",
+  blog: "blog",
+};
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
@@ -45,22 +56,31 @@ const currentId = String(fragments.length).padStart(4, "0");
       <p>Each idea here is a specimen in a cabinet still being built.</p>
     </div>
 
-    <a class="hero-cta" href="/fragments">[▸ ENTER THE CABINET]</a>
+    <a class="hero-cta" href="/fragments">[<span class="cta-arrow">▸</span> ENTER THE CABINET]</a>
     <a href="/between" class="between-easter-egg" aria-label="between">between</a>
   </section>
 
-  <SearchBar />
-
   <section class="recent">
-    <div class="recent-title">RECENT CRYSTALLIZATION</div>
-      <div class="recent-list">
-       {posts.map((post) => (
-       <div>
-        <h3>{post.title}</h3>
-        <p>{post.slug}</p>
-      </div>
-       ))}
-      </div>
+    <div class="recent-title">RECENT CRYSTALLIZATION · 最近结晶</div>
+    <div class="recent-list">
+      {recentPosts.map((post) => {
+        const cat = typeof post.category === "object" && post.category !== null
+          ? post.category.slug
+          : null;
+        const pathSegment = cat ? categoryToPath[cat] ?? cat : null;
+        const href = pathSegment ? `/${pathSegment}/${post.slug}` : `/blog/${post.slug}`;
+        const date = post.createdAt?.split("T")[0]?.replace(/-/g, ".") ?? "";
+        return (
+          <a href={href} class="recent-row">
+            <span class="recent-row-title">{post.title}</span>
+            <span class="recent-row-meta">
+              {cat && <span class="recent-row-cat">{cat}</span>}
+              {date && <span class="recent-row-date">{date}</span>}
+            </span>
+          </a>
+        );
+      })}
+    </div>
   </section>
 </Layout>
 
@@ -125,6 +145,7 @@ const currentId = String(fragments.length).padStart(4, "0");
 }
 
 .hero-cta {
+  position: relative;
   display: inline-block;
   margin-top: var(--space-8);
   font-family: var(--font-mono);
@@ -132,10 +153,37 @@ const currentId = String(fragments.length).padStart(4, "0");
   letter-spacing: 0.1em;
   text-decoration: none;
   color: var(--paper-bone);
+  transition: color 150ms var(--ease-out);
+}
+
+.cta-arrow {
+  display: inline-block;
+  transition: transform 150ms var(--ease-out);
 }
 
 .hero-cta:hover {
   color: var(--mineral-copper);
+}
+
+.hero-cta:hover .cta-arrow {
+  transform: translateX(4px);
+}
+
+.hero-cta::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms var(--ease-out);
+}
+
+.hero-cta:hover::after {
+  transform: scaleX(1);
 }
 
 .between-easter-egg {
@@ -144,17 +192,14 @@ const currentId = String(fragments.length).padStart(4, "0");
   bottom: var(--space-8);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--rock-basalt);
+  color: var(--text-dim);
   text-decoration: none;
   letter-spacing: 0.2em;
-  transition:
-    color 800ms var(--ease-out),
-    letter-spacing 800ms var(--ease-out);
+  transition: color 150ms var(--ease-out);
 }
 
 .between-easter-egg:hover {
-  color: var(--mineral-copper);
-  letter-spacing: 0.3em;
+  color: var(--text-primary);
 }
 
 .recent {
@@ -173,6 +218,65 @@ const currentId = String(fragments.length).padStart(4, "0");
 .recent-list {
   display: flex;
   flex-direction: column;
+}
+
+.recent-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.recent-row + .recent-row {
+  border-top: 1px solid var(--border);
+}
+
+.recent-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.recent-row:hover {
+  background: var(--bg-surface-2);
+}
+
+.recent-row:hover::before {
+  transform: scaleY(1);
+}
+
+.recent-row-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.recent-row:hover .recent-row-title {
+  color: var(--text-primary);
+}
+
+.recent-row-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 @media (max-width: 768px) {

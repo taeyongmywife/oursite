@@ -20,7 +20,7 @@ interface Props {
 const { tag, posts, basePath = "/fragments" } = Astro.props;
 ---
 
-<section class="tag-box">
+<section class:list={["tag-box", posts.length === 0 && "is-empty"]}>
   <div class="tag-box-head">
     <div class="tag-box-name">{tag.title}</div>
     <div class="tag-box-count">{posts.length} 件</div>
@@ -43,12 +43,16 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
 <style>
 .tag-box {
   border: var(--border-solid);
-  background: rgba(10, 10, 12, 0.72);
-  transition: border-color var(--duration-base) var(--ease-out);
+  background: var(--bg-surface);
 }
 
-.tag-box:hover {
-  border-color: var(--mineral-copper);
+.tag-box.is-empty .tag-box-name,
+.tag-box.is-empty .tag-box-count {
+  color: var(--text-dim);
+}
+
+.tag-box.is-empty:hover .tag-box-name {
+  color: var(--text-dim);
 }
 
 .tag-box-head {
@@ -56,7 +60,7 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
   justify-content: space-between;
   align-items: baseline;
   padding: var(--space-5) var(--space-6);
-  border-bottom: 1px solid var(--rock-basalt);
+  border-bottom: 1px solid var(--border);
 }
 
 .tag-box-name {
@@ -64,13 +68,18 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
   font-size: var(--text-sm);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--mineral-copper);
+  color: var(--text-muted);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.tag-box:hover .tag-box-name {
+  color: var(--accent);
 }
 
 .tag-box-count {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--rock-granite);
+  color: var(--accent);
 }
 
 .tag-box-list {
@@ -79,20 +88,38 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
 }
 
 .tag-post-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) var(--space-6);
   text-decoration: none;
-  transition: background var(--duration-base) var(--ease-out);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.tag-post-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--duration-fast) var(--ease-out);
 }
 
 .tag-post-item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface-2);
+}
+
+.tag-post-item:hover::before {
+  transform: scaleY(1);
 }
 
 .tag-post-item + .tag-post-item {
-  border-top: 1px solid var(--rock-basalt);
+  border-top: 1px solid var(--border);
 }
 
 .tag-post-left {
@@ -112,10 +139,15 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
 .tag-post-title {
   font-family: var(--font-serif);
   font-size: var(--text-base);
-  color: var(--paper-bone);
+  color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.tag-post-item:hover .tag-post-title {
+  color: var(--text-primary);
 }
 
 .tag-post-date {

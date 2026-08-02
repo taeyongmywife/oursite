@@ -1,18 +1,30 @@
 ---
-interface Props {
-  prompt: string;
-  options: { label: string; href?: string }[];
+interface ChoiceOption {
+  cn: string;
+  en?: string;
+  href?: string;
 }
 
-const { prompt, options } = Astro.props;
+interface Props {
+  cn: string;
+  en?: string;
+  options: ChoiceOption[];
+}
+
+const { cn, en, options } = Astro.props;
 ---
 
 <div class="choice-panel">
-  <div class="choice-prompt">{prompt}</div>
+  <div class="choice-prompt">
+    <span class="choice-prompt-cn">{cn}</span>
+    {en && <span class="choice-prompt-en">{en}</span>}
+  </div>
   <div class="choice-options">
     {options.map((opt) => (
       <a href={opt.href ?? "#"} class="choice-option">
-        {opt.label}
+        <span class="choice-option-cn">{opt.cn}</span>
+        {opt.en && <span class="choice-option-en">{opt.en}</span>}
+        <span class="choice-option-arrow" aria-hidden="true">→</span>
       </a>
     ))}
   </div>
@@ -20,41 +32,109 @@ const { prompt, options } = Astro.props;
 
 <style>
 .choice-panel {
-  background: rgba(107, 122, 58, 0.85);
-  border: 1px solid var(--mineral-copper);
+  position: relative;
+  background: var(--bg-surface);
+  border: var(--border-solid);
   padding: var(--space-6);
   margin: var(--space-12) 0;
   font-family: var(--font-mono);
 }
 
 .choice-prompt {
-  font-size: var(--text-sm);
-  color: var(--paper-bone);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
   margin-bottom: var(--space-4);
+}
+
+.choice-prompt-cn {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--paper-bone);
+}
+
+.choice-prompt-en {
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rock-granite);
 }
 
 .choice-options {
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .choice-option {
-  display: block;
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--mineral-copper);
-  color: var(--paper-bone);
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
   text-decoration: none;
   font-size: var(--text-sm);
-  transition: background var(--duration-fast) var(--ease-out);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
 
 .choice-option:last-child {
-  border-bottom: 1px solid var(--mineral-copper);
+  border-bottom: 1px solid var(--border);
+}
+
+.choice-option-cn {
+  color: var(--text-muted);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.choice-option-en {
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.05em;
+}
+
+.choice-option-arrow {
+  margin-left: auto;
+  color: var(--rock-granite);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.choice-option::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--duration-fast) var(--ease-out);
 }
 
 .choice-option:hover {
-  background: var(--paper-bone);
-  color: var(--bg-void);
+  background: var(--bg-surface-2);
+}
+
+.choice-option:hover::before {
+  transform: scaleY(1);
+}
+
+.choice-option:hover .choice-option-cn {
+  color: var(--text-primary);
+}
+
+.choice-option:hover .choice-option-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--accent);
 }
 </style>

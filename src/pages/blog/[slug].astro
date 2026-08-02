@@ -8,7 +8,7 @@ import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, type PayloadPost } from "../../lib/payload";
+import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -44,16 +44,19 @@ const coverUrl =
   post.cover && typeof post.cover === "object" && post.cover !== null
     ? (post.cover as { url?: string }).url ?? undefined
     : undefined;
+
+const { prevSlug, nextSlug } = await getSeriesAdjacent(post);
+const seriesAdjacentSlugs = [prevSlug, nextSlug].filter(
+  (s): s is string => Boolean(s)
+);
 ---
 
 <Layout title={`${post.title} | BLOG`} description={post.excerpt ?? post.title}>
   <article class="post">
     <SpecimenLabel
       id={specimenId}
-      titleCn={post.title}
-      titleEn={categoryLabel}
+      title={post.title}
       collected={collected}
-      location="digital sediment"
       composition={categoryLabel}
       status="crystallizing"
       variant="full"
@@ -65,23 +68,24 @@ const coverUrl =
       </div>
     )}
 
-    <div class="prose">
-      <RichText content={post.content as { root: unknown }} knowledgeMap={knowledgeMap} />
-    </div>
-
     <KnowledgeReference entries={knowledgeEntries} />
 
     <TagBoxChips post={post} />
 
+    <div class="prose">
+      <RichText content={post.content as { root: unknown }} knowledgeMap={knowledgeMap} />
+    </div>
+
     <SeriesNav post={post} />
 
-    <RelatedContent post={post} />
+    <RelatedContent post={post} excludeSlugs={seriesAdjacentSlugs} />
 
     <ChoicePanel
-      prompt="Close this file."
+      cn="收起档案"
+      en="Close this file"
       options={[
-        { label: "Back to blog", href: "/blog" },
-        { label: "Enter fragments", href: "/fragments" },
+        { cn: "回到博客", en: "Back to blog", href: "/blog" },
+        { cn: "进入碎片", en: "Enter fragments", href: "/fragments" },
       ]}
     />
   </article>

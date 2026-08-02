@@ -6,7 +6,7 @@ import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge } from "../../lib/payload";
+import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const experiments = await getPosts("experiment");
@@ -36,6 +36,11 @@ const knowledgeEntries = await getKnowledgeList();
 const knowledgeMap = buildKnowledgeMap(knowledgeEntries);
 const matchedKnowledge = getMatchedKnowledge(experiment.content, knowledgeEntries);
 
+const { prevSlug, nextSlug } = await getSeriesAdjacent(experiment);
+const seriesAdjacentSlugs = [prevSlug, nextSlug].filter(
+  (s): s is string => Boolean(s)
+);
+
 const seoTitle = experiment.seoTitle ?? experiment.title;
 const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.title;
 ---
@@ -44,10 +49,8 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
   <article class="experiment-detail">
     <SpecimenLabel
       id={specimenId}
-      titleCn={experiment.title}
-      titleEn={experiment.excerpt ?? experiment.title}
+      title={experiment.title}
       collected={collected}
-      location="digital sediment"
       status={statusLabel}
       variant="full"
     />
@@ -58,10 +61,6 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
         <p class="meta-section-content">{experiment.excerpt}</p>
       </div>
     )}
-
-    <div class="experiment-content">
-      <RichText content={experiment.content} knowledgeMap={knowledgeMap} />
-    </div>
 
     {matchedKnowledge.length > 0 && (
       <div class="knowledge-related">
@@ -76,15 +75,20 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
 
     <TagBoxChips post={experiment} />
 
+    <div class="experiment-content">
+      <RichText content={experiment.content} knowledgeMap={knowledgeMap} />
+    </div>
+
     <SeriesNav post={experiment} />
 
-    <RelatedContent post={experiment} />
+    <RelatedContent post={experiment} excludeSlugs={seriesAdjacentSlugs} />
 
     <ChoicePanel
-      prompt="Select your next move."
+      cn="选择下一步"
+      en="Select your next move"
       options={[
-        { label: "Back to experiments", href: "/experiments" },
-        { label: "Enter fragments", href: "/fragments" },
+        { cn: "返回实验记录", en: "Back to experiments", href: "/experiments" },
+        { cn: "进入碎片档案", en: "Enter fragments", href: "/fragments" },
       ]}
     />
 
@@ -144,7 +148,8 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
 }
 
 .knowledge-related {
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-6);
   padding-top: var(--space-5);
   border-top: 1px solid var(--rock-basalt);
 }

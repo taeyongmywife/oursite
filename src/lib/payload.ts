@@ -228,6 +228,31 @@ function seriesSlugOf(post: PayloadPost): string | null {
 }
 
 /**
+ * 返回当前篇在所属系列内的上下篇 slug。
+ * 用于避免 SeriesNav 翻页条与 RelatedContent 重复展示同一篇。
+ */
+export async function getSeriesAdjacent(
+  post: PayloadPost
+): Promise<{ prevSlug: string | null; nextSlug: string | null }> {
+  const curSeries = seriesSlugOf(post);
+  if (!curSeries) return { prevSlug: null, nextSlug: null };
+
+  const all = await getPosts();
+  const seriesPosts = all
+    .filter((p) => seriesSlugOf(p) === curSeries)
+    .sort((a, b) => (a.logNumber ?? 0) - (b.logNumber ?? 0));
+
+  const idx = seriesPosts.findIndex((p) => p.slug === post.slug);
+  return {
+    prevSlug: idx > 0 ? seriesPosts[idx - 1].slug : null,
+    nextSlug:
+      idx >= 0 && idx < seriesPosts.length - 1
+        ? seriesPosts[idx + 1].slug
+        : null,
+  };
+}
+
+/**
  * 计算与当前文章相关的其他文章：
  * - 共享 TagBox（主题盒子）数量加权（每个 +2）
  * - 同系列（Series）额外加权（+5）
@@ -236,16 +261,18 @@ function seriesSlugOf(post: PayloadPost): string | null {
  */
 export async function getRelatedPosts(
   current: PayloadPost,
-  limit = 4
+  limit = 4,
+  excludeSlugs: string[] = []
 ): Promise<RelatedPost[]> {
   const all = await getPosts();
   const curTags = tagBoxSlugsOf(current);
   const curSeries = seriesSlugOf(current);
+  const exclude = new Set<string>([current.slug, ...excludeSlugs]);
 
   const scored: Array<{ post: PayloadPost; score: number }> = [];
 
   for (const p of all) {
-    if (p.slug === current.slug) continue;
+    if (exclude.has(p.slug)) continue;
     if (p.status !== "published") continue;
 
     let score = 0;

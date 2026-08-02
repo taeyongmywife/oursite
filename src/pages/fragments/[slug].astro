@@ -7,7 +7,7 @@ import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge } from "../../lib/payload";
+import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
 export async function getStaticPaths() {
@@ -35,6 +35,11 @@ const knowledgeEntries = await getKnowledgeList();
 const knowledgeMap = buildKnowledgeMap(knowledgeEntries);
 const matchedKnowledge = getMatchedKnowledge(fragment.content, knowledgeEntries);
 
+const { prevSlug, nextSlug } = await getSeriesAdjacent(fragment);
+const seriesAdjacentSlugs = [prevSlug, nextSlug].filter(
+  (s): s is string => Boolean(s)
+);
+
 const seoTitle = fragment.seoTitle ?? fragment.title;
 const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
 ---
@@ -43,25 +48,14 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
   <article class="fragment-detail">
     <SpecimenLabel
       id={specimenId}
-      titleCn={fragment.title}
-      titleEn={fragment.title}
+      title={fragment.title}
       collected={collected}
-      location="digital sediment"
       status={status}
       variant="full"
     />
 
     <div class="hero-figure">
       <MineralFigure src={quartz} alt="Dark quartz cluster specimen" />
-    </div>
-
-    <div class="fragment-content">
-      <RichText content={fragment.content} knowledgeMap={knowledgeMap} />
-      {fragment.slug === "groove" && (
-        <p class="between-whisper">
-          那之后我没有再说话。<a href="/between" class="inline-between">between</a>
-        </p>
-      )}
     </div>
 
     {matchedKnowledge.length > 0 && (
@@ -77,15 +71,25 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
 
     <TagBoxChips post={fragment} />
 
+    <div class="fragment-content">
+      <RichText content={fragment.content} knowledgeMap={knowledgeMap} />
+      {fragment.slug === "groove" && (
+        <p class="between-whisper">
+          那之后我没有再说话。<a href="/between" class="inline-between">between</a>
+        </p>
+      )}
+    </div>
+
     <SeriesNav post={fragment} />
 
-    <RelatedContent post={fragment} />
+    <RelatedContent post={fragment} excludeSlugs={seriesAdjacentSlugs} />
 
     <ChoicePanel
-      prompt="你看向她，眼神里带着"
+      cn="看向她，眼神里带着"
+      en="What's next"
       options={[
-        { label: "回到陈列", href: "/fragments" },
-        { label: "继续探索", href: "/experiments" },
+        { cn: "回到陈列", en: "Back to fragments", href: "/fragments" },
+        { cn: "继续探索", en: "Enter experiments", href: "/experiments" },
       ]}
     />
 
@@ -143,7 +147,8 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
 }
 
 .knowledge-related {
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-6);
   padding-top: var(--space-5);
   border-top: 1px solid var(--rock-basalt);
 }

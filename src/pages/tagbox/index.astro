@@ -28,15 +28,22 @@ for (const p of posts) {
 
     {tagBoxes.length > 0 ? (
       <div class="tb-grid">
-        {tagBoxes.map((tb) => (
-          <a href={`/tagbox/${tb.slug}`} class="tb-card">
-            <div class="tb-head">
-              <span class="tb-name">{tb.title}</span>
-              <span class="tb-count">{(countBySlug[tb.slug] ?? 0).toString().padStart(2, "0")} 篇</span>
-            </div>
-            {tb.description && <p class="tb-desc">{tb.description}</p>}
-          </a>
-        ))}
+        {tagBoxes.map((tb) => {
+          const count = countBySlug[tb.slug] ?? 0;
+          const isEmpty = count === 0;
+          return (
+            <a
+              href={`/tagbox/${tb.slug}`}
+              class:list={["tb-card", isEmpty && "is-empty"]}
+            >
+              <div class="tb-head">
+                <span class="tb-name">{tb.title}</span>
+                <span class="tb-count">{count.toString().padStart(2, "0")} 篇</span>
+              </div>
+              {tb.description && <p class="tb-desc">{tb.description}</p>}
+            </a>
+          );
+        })}
       </div>
     ) : (
       <div class="empty">暂无主题盒子。</div>
@@ -63,8 +70,8 @@ for (const p of posts) {
 .tb-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-5) var(--space-6);
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-6);
   border: var(--border-solid);
   background: rgba(10, 10, 12, 0.72);
   text-decoration: none;
@@ -88,13 +95,33 @@ for (const p of posts) {
   font-size: var(--text-sm);
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--mineral-copper);
+  color: var(--text-muted);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.tb-card:hover .tb-name {
+  color: var(--accent);
 }
 
 .tb-count {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--rock-granite);
+  color: var(--accent);
+}
+
+/* Zero-content boxes read as lower priority */
+.tb-card.is-empty .tb-name,
+.tb-card.is-empty .tb-count {
+  color: var(--text-dim);
+}
+
+.tb-card.is-empty:hover {
+  border-color: var(--border);
+  transform: none;
+}
+
+.tb-card.is-empty:hover .tb-name {
+  color: var(--text-dim);
 }
 
 .tb-desc {

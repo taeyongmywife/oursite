@@ -38,6 +38,15 @@
   --border-solid: 1px solid var(--rock-basalt);
   --border-active: 2px solid var(--mineral-copper);
 
+  /* Semantic aliases — reuse live palette only */
+  --accent: var(--mineral-copper);                                   /* Crisp Orange — reserved for interactive/active states */
+  --text-primary: var(--paper-bone);                                 /* primary text */
+  --text-muted: var(--rock-granite);                                 /* static labels, resting rows */
+  --text-dim: color-mix(in srgb, var(--rock-granite) 62%, var(--bg-void)); /* lowest-emphasis text */
+  --bg-surface: var(--bg-void);                                      /* resting surface */
+  --bg-surface-2: var(--bg-display);                                 /* hover surface (lighter) */
+  --border: var(--rock-basalt);                                      /* zinc hairline/border color */
+
   --duration-fast: 150ms;
   --duration-base: 300ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

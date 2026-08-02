@@ -1,5 +1,5 @@
 ---
-import { getPosts, type PayloadPost } from "../lib/payload";
+import { getPosts, getSeriesAdjacent, type PayloadPost } from "../lib/payload";
 
 interface Props {
   post: PayloadPost;
@@ -19,53 +19,49 @@ let nextPost: PayloadPost | null = null;
 
 // 同一 Series 内的连续阅读：按 logNumber 升序排，取当前篇的上下篇
 if (seriesSlug) {
-  const seriesPosts = (await getPosts())
-    .filter((p) => {
-      const s = p.series;
-      const slug = s && typeof s === "object" ? s.slug : null;
-      return slug === seriesSlug;
-    })
-    .sort((a, b) => (a.logNumber ?? 0) - (b.logNumber ?? 0));
-
-  const idx = seriesPosts.findIndex((p) => p.slug === post.slug);
-  if (idx > 0) prevPost = seriesPosts[idx - 1];
-  if (idx >= 0 && idx < seriesPosts.length - 1) {
-    nextPost = seriesPosts[idx + 1];
-  }
+  const { prevSlug, nextSlug } = await getSeriesAdjacent(post);
+  const all = await getPosts();
+  if (prevSlug) prevPost = all.find((p) => p.slug === prevSlug) ?? null;
+  if (nextSlug) nextPost = all.find((p) => p.slug === nextSlug) ?? null;
 }
 
 const hasSeries = Boolean(seriesSlug);
+const hasAdjacent = Boolean(prevPost || nextPost);
+const seriesKicker = seriesTitle ? `SERIES · ${seriesTitle}` : "SERIES";
 const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : "";
 ---
 
-{hasSeries && (
+{hasSeries && hasAdjacent && (
   <nav class="series-nav" aria-label="Series navigation">
     <div class="series-head">
-      <span class="series-kicker">SERIES</span>
-      <span class="series-name">{seriesTitle}</span>
+      <span class="series-kicker">{seriesKicker}</span>
       {logNumber != null && <span class="series-num">{logLabel}</span>}
     </div>
 
-    {(prevPost || nextPost) && (
-      <div class="series-steps">
-        {prevPost ? (
-          <a class="series-step prev" href={`/blog/${prevPost.slug}`}>
-            <span class="step-dir">← PREV LOG</span>
-            <span class="step-title">{prevPost.title}</span>
-          </a>
-        ) : (
-          <span class="series-step prev disabled">—</span>
-        )}
-        {nextPost ? (
-          <a class="series-step next" href={`/blog/${nextPost.slug}`}>
-            <span class="step-dir">NEXT LOG →</span>
-            <span class="step-title">{nextPost.title}</span>
-          </a>
-        ) : (
-          <span class="series-step next disabled">—</span>
-        )}
-      </div>
-    )}
+    <div class="series-steps">
+      {prevPost ? (
+        <a class="series-step prev" href={`/blog/${prevPost.slug}`}>
+          <span class="step-dir">← 上一篇 · PREV</span>
+          <span class="step-title">{prevPost.title}</span>
+        </a>
+      ) : (
+        <span class="series-step prev disabled">
+          <span class="step-dir">·</span>
+          <span class="step-title">系列首篇 · FIRST</span>
+        </span>
+      )}
+      {nextPost ? (
+        <a class="series-step next" href={`/blog/${nextPost.slug}`}>
+          <span class="step-dir">下一篇 · NEXT →</span>
+          <span class="step-title">{nextPost.title}</span>
+        </a>
+      ) : (
+        <span class="series-step next disabled">
+          <span class="step-dir">·</span>
+          <span class="step-title">系列末篇 · LAST</span>
+        </span>
+      )}
+    </div>
   </nav>
 )}
 
@@ -73,38 +69,33 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
   .series-nav {
     margin: var(--space-12) 0;
     padding: var(--space-5) var(--space-6);
-    border: var(--border-thin);
-    background: var(--bg-shelf);
+    border: var(--border-solid);
+    background: var(--bg-surface);
   }
 
   .series-head {
     display: flex;
     align-items: baseline;
-    gap: var(--space-3);
+    justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    letter-spacing: 0.08em;
+    font-size: var(--text-xs);
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    margin-bottom: var(--space-3);
   }
 
   .series-kicker {
     color: var(--rock-granite);
   }
 
-  .series-name {
+  .series-num {
     color: var(--mineral-copper);
   }
 
-  .series-num {
-    color: var(--paper-bone);
-    margin-left: auto;
-  }
-
   .series-steps {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-4);
-    margin-top: var(--space-4);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
   }
 
   .series-step {
@@ -112,16 +103,16 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
     flex-direction: column;
     gap: var(--space-1);
     text-decoration: none;
-    font-size: var(--text-sm);
+    color: var(--text-muted);
+    transition: color var(--duration-fast) var(--ease-out);
   }
 
   .series-step.next {
     text-align: right;
-    margin-left: auto;
   }
 
-  .series-step.prev.disabled,
-  .series-step.next.disabled {
+  .series-step.disabled {
+    cursor: default;
     color: var(--rock-granite);
   }
 
@@ -129,15 +120,21 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--rock-granite);
   }
 
   .step-title {
-    color: var(--paper-bone);
-    transition: color var(--duration-base) var(--ease-out);
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    transition: color var(--duration-fast) var(--ease-out);
   }
 
   a.series-step:hover .step-title {
-    color: var(--mineral-copper);
+    color: var(--text-primary);
+  }
+
+  a.series-step:hover {
+    color: var(--text-primary);
   }
 </style>

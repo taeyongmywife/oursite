@@ -4,6 +4,7 @@ import basalt from "../assets/mineral/04-basalt-columns.png";
 import BaseHead from "../components/BaseHead.astro";
 import Footer from "../components/Footer.astro";
 import Nav from "../components/Nav.astro";
+import SearchOverlay from "../components/SearchOverlay.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
 import "../styles/tokens.css";
 import "../styles/fonts.css";
@@ -30,6 +31,7 @@ const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
       <slot />
     </main>
     <Footer />
+    <SearchOverlay />
   </body>
 </html>
 

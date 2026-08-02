@@ -4,7 +4,7 @@ const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 
 /**
  * 构建时生成的静态搜索索引。
- * 输出全部 published 文章的轻量字段，供前端 SearchBar 做客户端实时过滤。
+ * 输出全部 published 文章的轻量字段，供前端 SearchOverlay 做客户端实时过滤。
  * 未来接入真搜索引擎时，本文件可被替换为后端索引 API。
  */
 export const GET: APIRoute = async () => {

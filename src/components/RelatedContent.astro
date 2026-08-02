@@ -4,13 +4,15 @@ import { getRelatedPosts, type PayloadPost } from "../lib/payload";
 interface Props {
   post: PayloadPost;
   limit?: number;
+  excludeSlugs?: string[];
 }
 
-const { post, limit = 4 } = Astro.props;
+const { post, limit = 4, excludeSlugs = [] } = Astro.props;
 
 // 相关文章基于共享 TagBox + 同 Series 加权计算（见 payload.ts getRelatedPosts）。
+// excludeSlugs 用于排除已经在 SeriesNav 中展示过的上下篇，避免重复链接。
 // 防御式：无关联文章时整块不渲染。
-const related = await getRelatedPosts(post, limit);
+const related = await getRelatedPosts(post, limit, excludeSlugs);
 const hasRelated = related.length > 0;
 ---
 
