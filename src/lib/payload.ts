@@ -1,5 +1,20 @@
 const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 
+/**
+ * 把 Payload 返回的相对媒体路径补全为完整 URL。
+ * 前端（Vercel）与 CMS（Vercel）不同域，相对路径 /api/media/file/... 会解析到前端域名导致 404。
+ */
+export function resolveMediaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//.test(url)) return url;
+  return `${payloadUrl}${url}`;
+}
+
+function resolveCover<T extends { url?: string | null }>(cover: T | null | undefined): T | null {
+  if (!cover) return null;
+  return { ...cover, url: resolveMediaUrl(cover.url) ?? undefined };
+}
+
 interface PayloadPost {
   id: number;
   title: string;
@@ -71,10 +86,15 @@ export async function getPosts(category?: string): Promise<PayloadPost[]> {
     return [];
   }
 
-  const posts: PayloadPost[] = docs.sort(
-    (a: PayloadPost, b: PayloadPost) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  const posts: PayloadPost[] = docs
+    .sort(
+      (a: PayloadPost, b: PayloadPost) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .map((post) => ({
+      ...post,
+      cover: resolveCover(post.cover as { url?: string } | null),
+    }));
 
   if (!category) {
     return posts;
@@ -314,7 +334,12 @@ export async function getPostBySlug(slug: string): Promise<PayloadPost | null> {
     }
 
     const { docs } = await res.json();
-    return docs?.[0] ?? null;
+    const post = docs?.[0] ?? null;
+    if (!post) return null;
+    return {
+      ...post,
+      cover: resolveCover(post.cover as { url?: string } | null),
+    };
   } catch (err) {
     console.warn(`[payload] Failed to fetch post "${slug}": ${err}`);
     return null;
@@ -478,9 +503,19 @@ export async function getProducts(): Promise<PayloadProduct[]> {
     }
 
     const { docs } = await res.json();
-    return (docs as PayloadProduct[]).sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+    return (docs as PayloadProduct[])
+      .map((p) => ({
+        ...p,
+        coverImage: p.coverImage
+          ? { ...p.coverImage, url: resolveMediaUrl(p.coverImage.url) ?? "" }
+          : null,
+        gallery: p.gallery
+          ? p.gallery.map((g) => ({ ...g, url: resolveMediaUrl(g.url) ?? "" }))
+          : null,
+      }))
+      .sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
   } catch (err) {
     console.warn(`[payload] Failed to fetch products: ${err}. Returning empty.`);
     return [];
@@ -499,7 +534,17 @@ export async function getProductBySlug(slug: string): Promise<PayloadProduct | n
     }
 
     const { docs } = await res.json();
-    return (docs as PayloadProduct[])?.[0] ?? null;
+    const product = (docs as PayloadProduct[])?.[0] ?? null;
+    if (!product) return null;
+    return {
+      ...product,
+      coverImage: product.coverImage
+        ? { ...product.coverImage, url: resolveMediaUrl(product.coverImage.url) ?? "" }
+        : null,
+      gallery: product.gallery
+        ? product.gallery.map((g) => ({ ...g, url: resolveMediaUrl(g.url) ?? "" }))
+        : null,
+    };
   } catch (err) {
     console.warn(`[payload] Failed to fetch product "${slug}": ${err}`);
     return null;
