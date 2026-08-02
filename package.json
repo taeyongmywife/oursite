@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "set ASTRO_TELEMETRY_DISABLED=1&& astro dev",
     "build": "set ASTRO_TELEMETRY_DISABLED=1&& astro build",
+    "build:local": "set ASTRO_TELEMETRY_DISABLED=1&& node scripts/build-local.mjs",
     "preview": "set ASTRO_TELEMETRY_DISABLED=1&& astro preview",
     "astro": "astro"
   },
