@@ -587,3 +587,51 @@ export async function getMarketCategories(): Promise<PayloadMarketCategory[]> {
     return [];
   }
 }
+
+// ===========================
+// Between（潜意识层，独立集合，无标题/作者）
+// ===========================
+
+export interface BetweenEntry {
+  /** 格式化后的时间戳，如 2026.06（取自 publishedAt，回退 updatedAt） */
+  createdAt: string;
+  /** 正文纯文本，空行分隔段落 */
+  body: string;
+}
+
+function formatBetweenStamp(date: string | null | undefined): string {
+  if (!date) return "";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/**
+ * 从 CMS 拉取「参与轮换」的 between 条目（active=true）。
+ * 构建时执行（SSG），结果会嵌入 /between 页面，由客户端随机展示其一。
+ */
+export async function getBetweenEntries(): Promise<BetweenEntry[]> {
+  try {
+    const res = await fetch(
+      `${payloadUrl}/api/between?limit=200&depth=0&where[active][equals]=true`
+    );
+
+    if (!res.ok) {
+      console.warn(`[payload] Between fetch returned ${res.status}. Returning empty.`);
+      return [];
+    }
+
+    const { docs } = await res.json();
+    return (docs as Array<Record<string, unknown>>)
+      .map((d) => ({
+        createdAt: formatBetweenStamp(
+          (d.publishedAt as string | null) ?? (d.updatedAt as string | null)
+        ),
+        body: typeof d.body === "string" ? (d.body as string) : "",
+      }))
+      .filter((e) => e.body.trim().length > 0);
+  } catch (err) {
+    console.warn(`[payload] Failed to fetch between entries: ${err}. Returning empty.`);
+    return [];
+  }
+}

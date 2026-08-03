@@ -1,12 +1,12 @@
 ---
-import { getCollection } from "astro:content";
+import { getBetweenEntries } from "../lib/payload";
 import "../styles/tokens.css";
 import "../styles/fonts.css";
 import "../styles/base.css";
 
-const entries = (await getCollection("between")).filter(
-  (entry) => !entry.data.hidden && (entry.data.weight ?? 1) > 0,
-);
+// 构建时从 CMS 的 between 集合拉取「参与轮换」的条目。
+// 结果嵌入页面，由客户端每次加载随机展示其一（避免连续重复）。
+const entries = await getBetweenEntries();
 
 const total = entries.length;
 const pageTitle = "between | BubbleCrisp";
@@ -49,7 +49,7 @@ const canonicalURL = new URL("/between", siteUrl);
       Everything happens <a href="/between" class="between-footer-link">between</a>.
     </footer>
 
-    <script is:inline>
+    <script is:inline define:vars={{ entries }}>
       const root = document.querySelector("[data-between]");
       const stamp = document.querySelector("[data-between-stamp]");
       const content = document.querySelector("[data-between-content]");
@@ -144,37 +144,26 @@ const canonicalURL = new URL("/between", siteUrl);
         }
       };
 
-      const fetchEntry = (index, total, retries) => {
-        fetch(`/between/entries/${index}.json`)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to load between entry.");
-            }
+      const list = Array.isArray(entries) ? entries : [];
+      const lastKey = sessionStorage.getItem("between-last");
 
-            return response.json();
-          })
-          .then((entry) => {
-            renderEntry(entry);
-          })
-          .catch(() => {
-            if (retries > 0) {
-              const nextIndex = (index + 1) % total;
-              window.setTimeout(() => fetchEntry(nextIndex, total, retries - 1), 300);
-            } else {
-              renderEmpty();
-            }
-          });
+      const pickIndex = () => {
+        if (list.length <= 1) return 0;
+        let idx = Math.floor(Math.random() * list.length);
+        let guard = 0;
+        while (String(idx) === lastKey && guard < 12) {
+          idx = Math.floor(Math.random() * list.length);
+          guard++;
+        }
+        return idx;
       };
 
-      if (root) {
-        const total = Number.parseInt(root.dataset.total ?? "0", 10);
-
-        if (!Number.isFinite(total) || total <= 0) {
-          renderEmpty();
-        } else {
-          const index = Math.floor(Math.random() * total);
-          fetchEntry(index, total, 2);
-        }
+      if (list.length === 0) {
+        renderEmpty();
+      } else {
+        const idx = pickIndex();
+        sessionStorage.setItem("between-last", String(idx));
+        renderEntry(list[idx]);
       }
     </script>
   </body>
