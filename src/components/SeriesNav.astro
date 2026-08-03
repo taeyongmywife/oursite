@@ -40,7 +40,7 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
 
     <div class="series-steps">
       {prevPost ? (
-        <a class="series-step prev" href={`/blog/${prevPost.slug}`}>
+        <a class="series-step prev" href={`/blog/${prevPost.slug}`} title={prevPost.title}>
           <span class="step-dir">← 上一篇 · PREV</span>
           <span class="step-title">{prevPost.title}</span>
         </a>
@@ -51,7 +51,7 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
         </span>
       )}
       {nextPost ? (
-        <a class="series-step next" href={`/blog/${nextPost.slug}`}>
+        <a class="series-step next" href={`/blog/${nextPost.slug}`} title={nextPost.title}>
           <span class="step-dir">下一篇 · NEXT →</span>
           <span class="step-title">{nextPost.title}</span>
         </a>
@@ -102,13 +102,14 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    min-width: 0; /* 允许标题在网格列内收缩，配合 ellipsis 截断 */
     text-decoration: none;
     color: var(--text-muted);
     transition: color var(--duration-fast) var(--ease-out);
   }
 
   .series-step.next {
-    text-align: right;
+    text-align: right; /* 仅标签(FIRST/NEXT)保持右对齐以呼应右栏；标题始终左对齐 */
   }
 
   .series-step.disabled {
@@ -125,8 +126,14 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
   }
 
   .step-title {
+    display: block;
+    width: 100%;
     font-size: var(--text-sm);
     color: var(--text-muted);
+    text-align: left; /* 不论 PREV 还是 NEXT 栏，标题始终左对齐 */
+    white-space: nowrap; /* 超长标题强制单行 */
+    overflow: hidden;
+    text-overflow: ellipsis; /* 超出容器宽度显示省略号，避免锯齿状换行 */
     transition: color var(--duration-fast) var(--ease-out);
   }
 

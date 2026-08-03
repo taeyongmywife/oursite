@@ -1,0 +1,79 @@
+---
+/**
+ * Between 彩蛋散点组件。
+ * 在视口边缘/留白处散落 3–5 个低对比度 "between" 入口，点击均跳转 /between
+ * （由 between.astro 负责从 CMS 随机抽一条、且避免与上次重复）。
+ * 视觉沿用已确认的 .between-easter-egg 风格：默认低对比度、hover 过渡到 --text-primary、150ms ease。
+ *
+ * seed 由调用方（BaseLayout 按 pathname 派生）传入，使不同页面散点分布不同，
+ * 形成"偶然发现"的彩蛋感，而非规律出现的固定导航。
+ */
+interface Props {
+  seed?: number;
+  count?: number;
+}
+
+const { seed = 0, count } = Astro.props;
+
+// 视口边缘/留白处的散点坐标池（仅用 top/bottom 之一 + left/right 之一，贴边以避开正文）
+const spots = [
+  { top: "15%", left: "1.5%" },
+  { top: "27%", right: "1.5%" },
+  { bottom: "23%", left: "2%" },
+  { bottom: "33%", right: "2%" },
+  { top: "52%", left: "1%" },
+  { bottom: "55%", right: "1%" },
+  { top: "73%", left: "2%" },
+  { top: "66%", right: "2%" },
+];
+
+const n = count ?? 3 + (Math.abs(seed) % 3); // 3–5 处
+const start = ((seed % spots.length) + spots.length) % spots.length;
+const picks = Array.from({ length: n }, (_, i) => spots[(start + i) % spots.length]);
+---
+
+<div class="between-egg-field" aria-hidden="false">
+  {
+    picks.map((p) => (
+      <a
+        href="/between"
+        class="between-egg"
+        style={Object.entries(p)
+          .map(([k, v]) => `${k}:${v}`)
+          .join(";")}
+        aria-label="between"
+      >between</a>
+    ))
+  }
+</div>
+
+<style>
+  .between-egg-field {
+    display: contents; /* 不生成额外盒子，仅作语义包裹；链接各自 fixed 定位 */
+  }
+
+  .between-egg {
+    position: fixed;
+    z-index: 4;
+    pointer-events: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.22em;
+    color: var(--text-dim);
+    text-decoration: none;
+    opacity: 0.92;
+    transition: color 150ms var(--ease-out), opacity 150ms var(--ease-out);
+  }
+
+  .between-egg:hover {
+    color: var(--text-primary);
+    opacity: 1;
+  }
+
+  /* 移动端边缘空间不足，隐藏以免遮挡正文点击 */
+  @media (max-width: 768px) {
+    .between-egg-field {
+      display: none;
+    }
+  }
+</style>
