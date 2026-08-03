@@ -19,9 +19,13 @@ interface Props {
 const { title = SITE_TITLE, description = SITE_DESCRIPTION } = Astro.props;
 
 // 由当前路径派生 seed，使不同页面散点分布不同（彩蛋感，而非固定导航）
-const eggSeed = (Astro.url.pathname || "/")
+const pathname = Astro.url.pathname || "/";
+const eggSeed = pathname
   .split("")
   .reduce((acc, ch) => (acc + ch.charCodeAt(0)) % 9973, 0);
+
+// /between 页面本身不应再出现通往自己的彩蛋，避免自循环
+const showEasterEgg = pathname !== "/between";
 ---
 
 <html lang="zh-CN">
@@ -38,7 +42,7 @@ const eggSeed = (Astro.url.pathname || "/")
     </main>
     <Footer />
     <SearchOverlay />
-    <BetweenEasterEgg seed={eggSeed} />
+    {showEasterEgg && <BetweenEasterEgg seed={eggSeed} />}
   </body>
 </html>
 

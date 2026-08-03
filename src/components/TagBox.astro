@@ -29,7 +29,7 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
     {posts.map((post, i) => (
       <a href={`${basePath}/${post.slug}`} class="tag-post-item">
         <div class="tag-post-left">
-          <span class="tag-post-index">#{(i + 1).toString().padStart(3, "0")}</span>
+          <span class="tag-post-index">#{(i + 1).toString().padStart(4, "0")}</span>
           <span class="tag-post-title">{post.title}</span>
         </div>
         {post.createdAt && (

@@ -32,7 +32,7 @@ const categoryCards = categories.map((cat: PayloadMarketCategory, i) => {
   const label = labelMap[cat.slug] ?? { cn: cat.title, en: cat.title.toUpperCase(), unit: "件" };
   const count = products.filter((p) => getCategorySlug(p) === cat.slug).length;
   return {
-    id: String(i + 1).padStart(3, "0"),
+    id: String(i + 1).padStart(4, "0"),
     titleCn: label.cn,
     titleEn: label.en,
     description: cat.description ?? label.cn,
@@ -72,7 +72,7 @@ const productIndex = new Map(products.map((p, i) => [p.slug, i]));
         {featuredProducts.map((product) => (
           <div class="product-item">
             <ProductCard
-              id={String((productIndex.get(product.slug) ?? 0) + 1).padStart(3, "0")}
+              id={String((productIndex.get(product.slug) ?? 0) + 1).padStart(4, "0")}
               href={`/market/${product.slug}`}
               titleCn={product.title}
               titleEn={product.shortDescription ?? ""}
