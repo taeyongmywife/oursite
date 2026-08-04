@@ -104,12 +104,23 @@ const canonicalURL = new URL("/between", siteUrl);
         });
       };
 
+      // 取正文首行作为「预览」，截断成一行短句，方便一眼区分不同条目。
+      const makePreview = (body) => {
+        const text = typeof body === "string" ? body : "";
+        const fragment = text.split(/\r?\n\s*\r?\n/)[0] || "";
+        const line = fragment.split(/\r?\n/)[0].trim();
+        if (!line) return "—";
+        return line.length > 20 ? line.slice(0, 20) + "…" : line;
+      };
+
       const renderEntry = (entry) => {
         if (!stamp || !content || !stayButton || !homeButton) {
           return;
         }
 
-        stamp.textContent = entry.createdAt;
+        // 首列改为正文预览（便于区分），原时间戳保留为悬停提示。
+        stamp.textContent = makePreview(entry.body);
+        stamp.title = entry.createdAt;
         content.innerHTML = "";
 
         const fragments = entry.body.split(/\r?\n\s*\r?\n/g).filter(Boolean);
