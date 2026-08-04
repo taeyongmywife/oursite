@@ -6,6 +6,7 @@ import RichText from "../../components/RichText.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
+import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent } from "../../lib/payload";
 
 export async function getStaticPaths() {
@@ -62,16 +63,7 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
       </div>
     )}
 
-    {matchedKnowledge.length > 0 && (
-      <div class="knowledge-related">
-        <div class="related-title">RELATED KNOWLEDGE</div>
-        <div class="related-list">
-          {matchedKnowledge.map((k) => (
-            <a href={`/knowledge/${k.slug}`} class="related-tag">{k.term}</a>
-          ))}
-        </div>
-      </div>
-    )}
+    <KnowledgeReference entries={matchedKnowledge} />
 
     <TagBoxChips post={experiment} />
 
@@ -145,44 +137,6 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
 .experiment-content :global(ul) {
   margin: 0 0 var(--space-4) 0;
   padding-left: var(--space-6);
-}
-
-.knowledge-related {
-  margin-top: var(--space-6);
-  margin-bottom: var(--space-6);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--rock-basalt);
-}
-
-.related-title {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--rock-granite);
-  margin-bottom: var(--space-3);
-}
-
-.related-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.related-tag {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--paper-bone);
-  border: var(--border-solid);
-  padding: var(--space-1) var(--space-3);
-  text-decoration: none;
-  transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
-}
-
-.related-tag:hover {
-  border-color: var(--mineral-copper);
-  color: var(--mineral-copper);
 }
 
 .back-link {
