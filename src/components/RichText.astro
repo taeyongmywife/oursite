@@ -63,7 +63,8 @@ function applyKnowledgeLinks(text: string, km: Record<string, string>): string {
   return text.replace(regex, (match) => {
     const slug = km[match.toLowerCase()];
     if (!slug) return match;
-    return `<a href="/knowledge/${encodeURIComponent(slug)}" class="knowledge-link">${escapeHtml(match)}</a>`;
+    // 输出按钮触发浮层预览（与 KnowledgeReference 复用同一个 payload + script）
+    return `<button type="button" class="knowledge-link knowledge-preview-trigger" data-knowledge-slug="${escapeHtml(slug)}" aria-haspopup="dialog" aria-controls="knowledge-overlay-panel" aria-expanded="false">${escapeHtml(match)}</button>`;
   });
 }
 
@@ -192,13 +193,24 @@ const html = renderBlock(rootNode, knowledgeMap);
 
 <style>
 .knowledge-link {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
   color: var(--mineral-copper);
-  text-decoration: none;
   border-bottom: 1px dashed var(--mineral-moss);
   transition: border-color var(--duration-base) var(--ease-out);
 }
 
-.knowledge-link:hover {
+.knowledge-link:hover,
+.knowledge-link[aria-expanded="true"] {
   border-bottom-color: var(--mineral-copper);
+}
+
+.knowledge-link:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 2px;
 }
 </style>

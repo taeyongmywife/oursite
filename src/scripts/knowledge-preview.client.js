@@ -23,8 +23,15 @@
 
   let activeTrigger = null;
 
-  function open(idx) {
-    const entry = entries[idx];
+  function openByIdx(idx) {
+    return entries[idx];
+  }
+
+  function openBySlug(slug) {
+    return entries.find((e) => e && e.slug === slug);
+  }
+
+  function open(entry) {
     if (!entry) return;
     const summary = entry.summary && entry.summary.trim() ? entry.summary : "暂无摘要，点击「查看全部」阅读完整词条。";
     summaryEl.textContent = summary;
@@ -49,11 +56,20 @@
   }
 
   document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-knowledge-idx]");
-    if (!t) return;
+    // 正文内联链接（data-knowledge-slug）：来自 RichText 自动匹配
+    const tSlug = e.target.closest("[data-knowledge-slug]");
+    if (tSlug) {
+      e.preventDefault();
+      activeTrigger = tSlug;
+      open(openBySlug(tSlug.dataset.knowledgeSlug));
+      return;
+    }
+    // 底部 RELATED KNOWLEDGE chips（data-knowledge-idx）：来自 KnowledgeReference
+    const tIdx = e.target.closest("[data-knowledge-idx]");
+    if (!tIdx) return;
     e.preventDefault();
-    activeTrigger = t;
-    open(Number(t.dataset.knowledgeIdx));
+    activeTrigger = tIdx;
+    open(openByIdx(Number(tIdx.dataset.knowledgeIdx)));
   });
 
   scrim?.addEventListener("click", close);
