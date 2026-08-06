@@ -1,4 +1,7 @@
 ---
+import Overlay from "./Overlay.astro";
+import Button from "./Button.astro";
+
 interface KnowledgeEntry {
   term: string;
   slug: string;
@@ -10,17 +13,51 @@ interface Props {
 }
 
 const { entries } = Astro.props;
+
+// 触发点序号与 payload 索引一致（按出现顺序从 0 开始）
+const payloadJson = JSON.stringify(entries).replace(/</g, "\\u003c");
 ---
 
 {entries.length > 0 && (
-  <section class="knowledge-related">
-    <div class="related-title">RELATED KNOWLEDGE</div>
-    <div class="related-list">
-      {entries.map((entry) => (
-        <a href={`/knowledge/${entry.slug}`} class="related-tag">{entry.term}</a>
-      ))}
-    </div>
-  </section>
+  <>
+    <section class="knowledge-related">
+      <div class="related-title">RELATED KNOWLEDGE</div>
+      <div class="related-list">
+        {entries.map((entry, i) => (
+          <button
+            type="button"
+            class="related-tag knowledge-preview-trigger"
+            data-knowledge-idx={i}
+            aria-haspopup="dialog"
+            aria-controls="knowledge-overlay-panel"
+            aria-expanded="false"
+          >
+            {entry.term}
+          </button>
+        ))}
+      </div>
+    </section>
+
+    <Overlay labelledBy="knowledge-overlay-title" panelId="knowledge-overlay-panel">
+      <div class="knowledge-preview-body" data-knowledge-summary></div>
+      <div class="knowledge-preview-actions">
+        <Button
+          as="a"
+          href="#"
+          variant="outline"
+          size="sm"
+          dataAttrs={{ "knowledge-link": "" }}
+        >
+          查看全部
+        </Button>
+      </div>
+    </Overlay>
+
+    <script type="application/json" id="knowledge-preview-data" set:html={payloadJson}></script>
+    <script>
+      import "../scripts/knowledge-preview.client.js";
+    </script>
+  </>
 )}
 
 <style>
@@ -54,11 +91,41 @@ const { entries } = Astro.props;
   border: var(--border-solid);
   padding: var(--space-1) var(--space-3);
   text-decoration: none;
-  transition: border-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
 }
 
-.related-tag:hover {
+.related-tag:hover,
+.related-tag[aria-expanded="true"] {
   border-color: var(--mineral-copper);
   color: var(--mineral-copper);
+  background: var(--bg-surface-2);
+}
+
+.related-tag:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 2px;
+}
+
+.knowledge-preview-body {
+  margin: 0 0 var(--space-5) 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--paper-bone);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.knowledge-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-solid);
 }
 </style>

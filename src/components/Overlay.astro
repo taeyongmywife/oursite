@@ -1,0 +1,131 @@
+---
+/**
+ * 站内通用浮层组件（跟随 SearchOverlay 范式：scrim + div + role=dialog）。
+ * 只负责壳（遮罩/面板/标题/关闭按钮）+ 全局样式；内容与交互逻辑由使用方提供。
+ * 每个页面只渲染一个实例，多个触发点通过 data 属性 + 事件委托驱动。
+ */
+interface Props {
+  /** 面板标题元素的 id（aria-labelledby） */
+  labelledBy?: string;
+  /** 面板 id（触发点 aria-controls 指向它） */
+  panelId?: string;
+}
+
+const { labelledBy = "site-overlay-title", panelId = "site-overlay-panel" } = Astro.props;
+---
+
+<div class="site-overlay" data-site-overlay hidden aria-hidden="true">
+  <div class="site-overlay-scrim" data-site-overlay-scrim></div>
+  <div
+    class="site-overlay-panel"
+    id={panelId}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby={labelledBy}
+    data-site-overlay-panel
+    tabindex="-1"
+  >
+    <div class="site-overlay-head">
+      <span class="site-overlay-kicker" id={labelledBy}>
+        <slot name="kicker" />
+      </span>
+      <button
+        type="button"
+        class="site-overlay-close"
+        data-site-overlay-close
+        aria-label="关闭 / Close"
+      >
+        ×
+      </button>
+    </div>
+    <slot />
+  </div>
+</div>
+
+<style is:global>
+/* ===== 通用浮层（站内 SearchOverlay 范式） ===== */
+.site-overlay[hidden] {
+  display: none;
+}
+
+.site-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh var(--container-pad) 0;
+}
+
+.site-overlay-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.site-overlay-panel {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg-void);
+  border: var(--border-solid);
+  padding: var(--space-6);
+  font-family: var(--font-mono);
+}
+
+.site-overlay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.site-overlay-kicker {
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rock-granite);
+}
+
+.site-overlay-close {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.site-overlay-close:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .site-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .site-overlay-panel {
+    width: 100%;
+    max-height: 70vh;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-overlay-panel,
+  .site-overlay-scrim {
+    transition: none;
+  }
+}
+</style>
