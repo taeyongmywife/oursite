@@ -678,19 +678,3 @@ export function extractLLMResponses(content: unknown): LLMResponseCite[] {
   }
   return out;
 }
-
-/**
- * 构建 slug → 词条信息 的映射，供 RichText 行内知识词条（<details> 展开）使用。
- */
-export interface KnowledgeEntryInfo {
-  term: string;
-  summary: string;
-}
-
-export function buildKnowledgeEntries(list: KnowledgeItem[]): Record<string, KnowledgeEntryInfo> {
-  const map: Record<string, KnowledgeEntryInfo> = {};
-  for (const k of list) {
-    map[k.slug] = { term: k.term, summary: k.summary ?? "" };
-  }
-  return map;
-}

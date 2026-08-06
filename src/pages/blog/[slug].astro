@@ -9,7 +9,7 @@ import LLMResponseCite from "../../components/LLMResponseCite.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, buildKnowledgeEntries, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses, type PayloadPost } from "../../lib/payload";
+import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -38,7 +38,6 @@ const categoryLabel =
 
 const knowledgeList = await getKnowledgeList();
 const knowledgeMap = buildKnowledgeMap(knowledgeList);
-const knowledgeEntryInfo = buildKnowledgeEntries(knowledgeList);
 // 自动扫描正文：基于 term + aliases 命中，取代手动 knowledgeIndex 关联
 const knowledgeEntries = getMatchedKnowledge(post.content, knowledgeList);
 
@@ -78,7 +77,7 @@ const llmCites = extractLLMResponses(post.content);
     <TagBoxChips post={post} />
 
     <div class="prose">
-      <RichText content={post.content as { root: unknown }} knowledgeMap={knowledgeMap} knowledgeEntries={knowledgeEntryInfo} />
+      <RichText content={post.content as { root: unknown }} knowledgeMap={knowledgeMap} />
     </div>
 
     <LLMResponseCite cites={llmCites} />

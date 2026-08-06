@@ -17,11 +17,9 @@ export interface LexicalNode {
 interface Props {
   content: { root: LexicalNode } | LexicalNode;
   knowledgeMap?: Record<string, string>;
-  /** slug → 词条信息（term/summary），用于行内知识词条的 <details> 展开 */
-  knowledgeEntries?: Record<string, { term: string; summary: string }>;
 }
 
-const { content, knowledgeMap = {}, knowledgeEntries = {} } = Astro.props;
+const { content, knowledgeMap = {} } = Astro.props;
 const rootNode = "root" in content ? content.root : content;
 
 // LLM Review 引用触发点序号（与 extractLLMResponses 顺序一致，从 1 开始）
@@ -59,25 +57,18 @@ function buildKnowledgeRegex(km: Record<string, string>): RegExp {
   return regex;
 }
 
-function applyKnowledgeLinks(
-  text: string,
-  km: Record<string, string>,
-  ke: Record<string, { term: string; summary: string }>
-): string {
+function applyKnowledgeLinks(text: string, km: Record<string, string>): string {
   if (Object.keys(km).length === 0) return text;
   const regex = buildKnowledgeRegex(km);
   return text.replace(regex, (match) => {
     const slug = km[match.toLowerCase()];
     if (!slug) return match;
-    // 行内 <details> 展开（零脚本）：点词条就地展开摘要卡片，含「查看全部」跳转
-    const entry = ke[slug];
-    const term = entry?.term || match;
-    const summary = entry?.summary?.trim() ? entry.summary : "暂无摘要，点击「查看全部」阅读完整词条。";
-    return `<details class="k-word"><summary>${escapeHtml(term)}</summary><div class="k-pop"><p>${escapeHtml(summary)}</p><a href="/knowledge/${escapeHtml(slug)}">查看全部</a></div></details>`;
+    // 输出按钮触发浮层预览（与 KnowledgeReference 复用同一个 payload + script）
+    return `<button type="button" class="knowledge-link knowledge-preview-trigger" data-knowledge-slug="${escapeHtml(slug)}" aria-haspopup="dialog" aria-controls="knowledge-overlay-panel" aria-expanded="false">${escapeHtml(match)}</button>`;
   });
 }
 
-function renderInline(node: LexicalNode, km: Record<string, string> = {}, ke: Record<string, { term: string; summary: string }> = {}): string {
+function renderInline(node: LexicalNode, km: Record<string, string> = {}): string {
   if (node.type === "linebreak") return "<br>";
 
   if (node.type === "text") {
@@ -88,7 +79,7 @@ function renderInline(node: LexicalNode, km: Record<string, string> = {}, ke: Re
     if (Object.keys(km).length > 0 && raw) {
       if (node.format) {
         // If text has formatting, apply links inside the format wrapper
-        const linked = applyKnowledgeLinks(text, km, ke);
+        const linked = applyKnowledgeLinks(text, km);
         const fmt = node.format;
         if (fmt & 1) return `<strong>${linked}</strong>`;
         if (fmt & 2) return `<em>${linked}</em>`;
@@ -100,7 +91,7 @@ function renderInline(node: LexicalNode, km: Record<string, string> = {}, ke: Re
         return text;
       } else {
         // No format, just apply links
-        return applyKnowledgeLinks(text, km, ke);
+        return applyKnowledgeLinks(text, km);
       }
     }
 
@@ -117,7 +108,7 @@ function renderInline(node: LexicalNode, km: Record<string, string> = {}, ke: Re
 
   if (node.type === "link") {
     const href = escapeHtml(node.url ?? "#");
-    const inner = (node.children ?? []).map((c) => renderInline(c, km, knowledgeEntries)).join("");
+    const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
   }
 
@@ -132,13 +123,13 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
     }
 
     case "paragraph": {
-      const inner = (node.children ?? []).map((c) => renderInline(c, km, knowledgeEntries)).join("");
+      const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return inner ? `<p>${inner}</p>` : "";
     }
 
     case "heading": {
       const tag = node.tag ?? "h2";
-      const inner = (node.children ?? []).map((c) => renderInline(c, km, knowledgeEntries)).join("");
+      const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return `<${tag}>${inner}</${tag}>`;
     }
 
@@ -149,7 +140,7 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
     }
 
     case "listitem": {
-      const inner = (node.children ?? []).map((c) => renderInline(c, km, knowledgeEntries)).join("");
+      const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return `<li>${inner}</li>`;
     }
 
@@ -184,9 +175,9 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
         .map((c) => {
           const c2 = c as Record<string, unknown>;
           if (c2.type === "paragraph") {
-            return ((c2.children ?? []) as LexicalNode[]).map((x) => renderInline(x, km, knowledgeEntries)).join("");
+            return ((c2.children ?? []) as LexicalNode[]).map((x) => renderInline(x, km)).join("");
           }
-          return renderInline(c, km, knowledgeEntries);
+          return renderInline(c, km);
         })
         .join("");
       return `<${tag}${colSpan}${rowSpan}>${inner || "&nbsp;"}</${tag}>`;
@@ -219,7 +210,7 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
     }
 
     default: {
-      const fallback = (node.children ?? []).map((c) => renderInline(c, km, knowledgeEntries)).join("");
+      const fallback = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return fallback ? `<p>${fallback}</p>` : "";
     }
   }
@@ -231,60 +222,26 @@ const html = renderBlock(rootNode, knowledgeMap);
 <Fragment set:html={html} />
 
 <style>
-/* ===== 行内知识词条（<details> 展开，零脚本） ===== */
-.k-word {
-  display: inline;
-}
-
-.k-word summary {
-  display: inline;
-  list-style: none;
+.knowledge-link {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
   cursor: pointer;
   color: var(--mineral-copper);
   border-bottom: 1px dashed var(--mineral-moss);
   transition: border-color var(--duration-base) var(--ease-out);
 }
 
-.k-word summary::-webkit-details-marker {
-  display: none;
-}
-
-.k-word summary:hover {
+.knowledge-link:hover,
+.knowledge-link[aria-expanded="true"] {
   border-bottom-color: var(--mineral-copper);
 }
 
-.k-word summary:focus-visible {
+.knowledge-link:focus-visible {
   outline: 2px solid var(--mineral-copper);
   outline-offset: 2px;
-}
-
-.k-pop {
-  display: block;
-  margin: var(--space-3) 0 var(--space-4) 0;
-  padding: var(--space-3) var(--space-4);
-  border-left: 2px solid var(--border-active);
-  background: var(--bg-shelf);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: 1.7;
-  color: var(--paper-rust);
-  white-space: pre-wrap;
-}
-
-.k-pop p {
-  margin: 0 0 var(--space-2) 0;
-}
-
-.k-pop a {
-  color: var(--mineral-copper);
-  text-decoration: none;
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.k-pop a:hover {
-  text-decoration: underline;
 }
 
 /* ===== Lexical 表格（站内极简风） ===== */

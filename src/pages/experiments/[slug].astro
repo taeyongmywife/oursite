@@ -8,7 +8,7 @@ import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import LLMResponseCite from "../../components/LLMResponseCite.astro";
-import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, buildKnowledgeEntries, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses } from "../../lib/payload";
+import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const experiments = await getPosts("experiment");
@@ -36,7 +36,6 @@ const statusLabel =
 
 const knowledgeEntries = await getKnowledgeList();
 const knowledgeMap = buildKnowledgeMap(knowledgeEntries);
-const knowledgeEntryInfo = buildKnowledgeEntries(knowledgeEntries);
 const matchedKnowledge = getMatchedKnowledge(experiment.content, knowledgeEntries);
 
 const { prevSlug, nextSlug } = await getSeriesAdjacent(experiment);
@@ -73,7 +72,7 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
     <TagBoxChips post={experiment} />
 
     <div class="experiment-content">
-      <RichText content={experiment.content} knowledgeMap={knowledgeMap} knowledgeEntries={knowledgeEntryInfo} />
+      <RichText content={experiment.content} knowledgeMap={knowledgeMap} />
     </div>
 
     <LLMResponseCite cites={llmCites} />
