@@ -153,6 +153,36 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
       return "<hr>";
     }
 
+    // Lexical 表格（EXPERIMENTAL_TableFeature）
+    case "table": {
+      const rows = (node.children ?? []).map((c) => renderBlock(c, km)).join("");
+      return `<div class="lexical-table-wrap"><table><tbody>${rows}</tbody></table></div>`;
+    }
+
+    case "tablerow": {
+      const cells = (node.children ?? []).map((c) => renderBlock(c, km)).join("");
+      return `<tr>${cells}</tr>`;
+    }
+
+    case "tablecell": {
+      const raw = node as Record<string, unknown>;
+      const headerState = Number(raw.headerState ?? 0);
+      const tag = headerState > 0 ? "th" : "td";
+      const colSpan = Number(raw.colSpan ?? 1) > 1 ? ` colspan="${Number(raw.colSpan)}"` : "";
+      const rowSpan = Number(raw.rowSpan ?? 1) > 1 ? ` rowspan="${Number(raw.rowSpan)}"` : "";
+      // 单元格 children 是 paragraph 包裹的文本，需逐层取内联内容
+      const inner = (node.children ?? [])
+        .map((c) => {
+          const c2 = c as Record<string, unknown>;
+          if (c2.type === "paragraph") {
+            return ((c2.children ?? []) as LexicalNode[]).map((x) => renderInline(x, km)).join("");
+          }
+          return renderInline(c, km);
+        })
+        .join("");
+      return `<${tag}${colSpan}${rowSpan}>${inner || "&nbsp;"}</${tag}>`;
+    }
+
     case "llmResponse": {
       // 模型原文不进入正文（SEO 干净）：只渲染触发按钮，正文通过 data-cite-id 关联页面级 JSON payload。
       citeSeq += 1;
@@ -212,5 +242,40 @@ const html = renderBlock(rootNode, knowledgeMap);
 .knowledge-link:focus-visible {
   outline: 2px solid var(--mineral-copper);
   outline-offset: 2px;
+}
+
+/* ===== Lexical 表格（站内极简风） ===== */
+.lexical-table-wrap {
+  margin: var(--space-8) 0;
+  overflow-x: auto;
+  border: var(--border-solid);
+}
+
+.lexical-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.lexical-table-wrap th,
+.lexical-table-wrap td {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--rock-basalt);
+  text-align: left;
+  vertical-align: top;
+}
+
+.lexical-table-wrap th {
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  color: var(--paper-bone);
+  background: var(--bg-shelf);
+  letter-spacing: 0.02em;
+}
+
+.lexical-table-wrap td {
+  color: var(--paper-rust);
 }
 </style>
