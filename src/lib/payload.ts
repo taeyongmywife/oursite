@@ -635,3 +635,46 @@ export async function getBetweenEntries(): Promise<BetweenEntry[]> {
     return [];
   }
 }
+
+/* ===================== LLM Review 引用（llmResponse 节点） ===================== */
+
+export interface LLMResponseData {
+  modelId: string;
+  track: string;
+  scenario: string;
+  testedAt: string;
+  body: string;
+}
+
+export interface LLMResponseCite extends LLMResponseData {
+  /** 与正文触发按钮 data-cite-id 对应的序号（从 1 开始，按出现顺序） */
+  citeId: number;
+}
+
+/**
+ * 从文章正文（Lexical JSON）提取所有 llmResponse 节点，生成页面级引用列表。
+ * 渲染层（RichText）按相同顺序输出触发按钮，citeId 一一对应。
+ */
+export function extractLLMResponses(content: unknown): LLMResponseCite[] {
+  const root = (content as { root?: { children?: unknown[] } } | null)?.root;
+  const children = root?.children;
+  if (!Array.isArray(children)) return [];
+
+  const out: LLMResponseCite[] = [];
+  let seq = 0;
+  for (const child of children) {
+    const node = child as Record<string, unknown> | null;
+    if (!node || node.type !== "llmResponse") continue;
+    const data = (node.data ?? {}) as Partial<LLMResponseData>;
+    seq += 1;
+    out.push({
+      citeId: seq,
+      modelId: String(data.modelId ?? ""),
+      track: String(data.track ?? ""),
+      scenario: String(data.scenario ?? ""),
+      testedAt: String(data.testedAt ?? ""),
+      body: String(data.body ?? ""),
+    });
+  }
+  return out;
+}

@@ -1,0 +1,148 @@
+---
+/**
+ * 站内通用 Button —— 极简直角风。
+ * variant:
+ *  - outline: 描边（--border-solid），hover 铜色描边 + 浅底
+ *  - ghost:   透明底，hover 浅灰底（--bg-surface-2）+ 铜色文字，用于行内低调触发点
+ * size:
+ *  - sm / md / lg（默认 md）
+ */
+interface Props {
+  as?: "button" | "a";
+  href?: string;
+  variant?: "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
+  type?: "button" | "submit";
+  disabled?: boolean;
+  class?: string;
+  ariaLabel?: string;
+  ariaExpanded?: string;
+  ariaControls?: string;
+  ariaHaspopup?: string;
+  dataAttrs?: Record<string, string | number>;
+  title?: string;
+  children?: any;
+}
+
+const {
+  as = "button",
+  href,
+  variant = "outline",
+  size = "md",
+  type = "button",
+  disabled = false,
+  class: className = "",
+  ariaLabel,
+  ariaExpanded,
+  ariaControls,
+  ariaHaspopup,
+  dataAttrs = {},
+  title,
+} = Astro.props;
+
+const cls = `btn btn-${variant} btn-${size} ${className}`.trim();
+---
+
+{
+  as === "a" && href ? (
+    <a
+      href={href}
+      class={cls}
+      title={title}
+      aria-label={ariaLabel}
+      aria-haspopup={ariaHaspopup}
+      aria-controls={ariaControls}
+      aria-expanded={ariaExpanded}
+      {...dataAttrs}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button
+      type={type}
+      class={cls}
+      disabled={disabled}
+      title={title}
+      aria-label={ariaLabel}
+      aria-haspopup={ariaHaspopup}
+      aria-controls={ariaControls}
+      aria-expanded={ariaExpanded}
+      {...dataAttrs}
+    >
+      <slot />
+    </button>
+  )
+}
+
+<style>
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 2px;
+}
+
+/* ---- outline ---- */
+.btn-outline {
+  border: 1px solid var(--border-solid);
+  color: var(--paper-bone);
+  background: transparent;
+  text-transform: uppercase;
+}
+
+.btn-outline:hover:not([disabled]) {
+  border-color: var(--mineral-copper);
+  color: var(--mineral-copper);
+  background: var(--bg-surface-2);
+}
+
+/* ---- ghost（行内低调触发点） ---- */
+.btn-ghost {
+  border: 1px solid transparent;
+  color: var(--paper-bone);
+  background: transparent;
+}
+
+.btn-ghost:hover:not([disabled]) {
+  border-color: var(--border-solid);
+  color: var(--mineral-copper);
+  background: var(--bg-surface-2);
+}
+
+/* ---- sizes ---- */
+.btn-sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.btn-md {
+  padding: var(--space-2) var(--space-4);
+}
+
+.btn-lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-base);
+  text-transform: uppercase;
+  border-width: 2px;
+}
+
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+</style>

@@ -5,10 +5,11 @@ import MineralFigure from "../../components/MineralFigure.astro";
 import SpecimenLabel from "../../components/SpecimenLabel.astro";
 import RichText from "../../components/RichText.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
+import LLMResponseCite from "../../components/LLMResponseCite.astro";
 import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
-import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, type PayloadPost } from "../../lib/payload";
+import { getPostBySlug, getPosts, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses, type PayloadPost } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -49,6 +50,9 @@ const { prevSlug, nextSlug } = await getSeriesAdjacent(post);
 const seriesAdjacentSlugs = [prevSlug, nextSlug].filter(
   (s): s is string => Boolean(s)
 );
+
+// LLM Review「查看原文」引用（llmResponse 节点 → 页面级 JSON payload）
+const llmCites = extractLLMResponses(post.content);
 ---
 
 <Layout title={`${post.title} | BLOG`} description={post.excerpt ?? post.title}>
@@ -75,6 +79,8 @@ const seriesAdjacentSlugs = [prevSlug, nextSlug].filter(
     <div class="prose">
       <RichText content={post.content as { root: unknown }} knowledgeMap={knowledgeMap} />
     </div>
+
+    <LLMResponseCite cites={llmCites} />
 
     <SeriesNav post={post} />
 

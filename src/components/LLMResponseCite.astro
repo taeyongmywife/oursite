@@ -1,0 +1,255 @@
+---
+import type { LLMResponseCite } from "../lib/payload";
+
+interface Props {
+  cites: LLMResponseCite[];
+}
+
+const { cites } = Astro.props;
+// JSON 嵌入 <script> 时转义 <，防止正文里出现 </script> 提前闭合
+const payloadJson = JSON.stringify(cites).replace(/</g, "\\u003c");
+---
+
+{cites.length > 0 && (
+  <>
+    <div class="llm-cite-overlay" data-llm-overlay hidden aria-hidden="true">
+      <div class="llm-cite-scrim" data-llm-scrim></div>
+      <div
+        class="llm-cite-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="llm-cite-title"
+        data-llm-panel
+      >
+        <div class="llm-cite-panel-head">
+          <span class="llm-cite-kicker" id="llm-cite-title">MODEL RESPONSE · 查看原文</span>
+          <button
+            type="button"
+            class="llm-cite-close"
+            data-llm-close
+            aria-label="关闭 / Close"
+          >
+            ×
+          </button>
+        </div>
+        <div class="llm-cite-meta" data-llm-meta></div>
+        <pre class="llm-cite-body" data-llm-body></pre>
+        <div class="llm-cite-actions">
+          <button type="button" class="llm-cite-copy" data-llm-copy>复制原文</button>
+          <span class="llm-cite-live" data-llm-live role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+
+    <script type="application/json" id="llm-citations" set:html={payloadJson}></script>
+    <script>
+      import "../scripts/llm-cite.client.js";
+    </script>
+  </>
+)}
+
+<style is:global>
+/* ===== 触发点（正文行内按钮，由 RichText 渲染） ===== */
+.llm-cite-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin: 0 0.2em;
+  padding: 0.15em 0.5em;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  letter-spacing: 0.05em;
+  color: var(--paper-rust);
+  cursor: pointer;
+  vertical-align: baseline;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.llm-cite-trigger:hover,
+.llm-cite-trigger[aria-expanded="true"] {
+  border-color: var(--border-solid);
+  background: var(--bg-surface-2);
+  color: var(--mineral-copper);
+}
+
+.llm-cite-trigger:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 2px;
+}
+
+.llm-cite-trigger-icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+/* ===== 弹窗（跟随站内 SearchOverlay 浮层范式） ===== */
+.llm-cite-overlay[hidden] {
+  display: none;
+}
+
+.llm-cite-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh var(--container-pad) 0;
+}
+
+.llm-cite-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.llm-cite-panel {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--bg-void);
+  border: var(--border-solid);
+  padding: var(--space-6);
+  font-family: var(--font-mono);
+}
+
+.llm-cite-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.llm-cite-kicker {
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--rock-granite);
+}
+
+.llm-cite-close {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.llm-cite-close:hover {
+  color: var(--accent);
+}
+
+.llm-cite-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.llm-cite-track {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-solid);
+  color: var(--paper-bone);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.llm-cite-model {
+  color: var(--paper-bone);
+}
+
+.llm-cite-body {
+  margin: 0 0 var(--space-4) 0;
+  padding: var(--space-4);
+  background: var(--bg-shelf);
+  border-left: 2px solid var(--border-active);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--paper-bone);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+.llm-cite-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.llm-cite-copy {
+  appearance: none;
+  border: 1px solid var(--border-solid);
+  background: transparent;
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: var(--paper-bone);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.llm-cite-copy:hover {
+  border-color: var(--mineral-copper);
+  color: var(--mineral-copper);
+}
+
+.llm-cite-copy.is-copied {
+  color: var(--mineral-moss);
+  border-color: var(--mineral-moss);
+}
+
+.llm-cite-live {
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  letter-spacing: 0.05em;
+}
+
+/* 移动端：底部 half-sheet（保留阅读上下文） */
+@media (max-width: 768px) {
+  .llm-cite-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .llm-cite-panel {
+    width: 100%;
+    max-height: 70vh;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .llm-cite-trigger,
+  .llm-cite-panel,
+  .llm-cite-scrim {
+    transition: none;
+  }
+}
+</style>
