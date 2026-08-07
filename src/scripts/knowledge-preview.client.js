@@ -39,8 +39,6 @@
     overlay.hidden = false;
     overlay.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    const article = document.querySelector("article");
-    if (article) article.inert = true;
     if (activeTrigger) activeTrigger.setAttribute("aria-expanded", "true");
     panel.focus({ preventScroll: true });
   }
@@ -50,8 +48,6 @@
     overlay.hidden = true;
     overlay.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
-    const article = document.querySelector("article");
-    if (article) article.inert = false;
     if (activeTrigger) activeTrigger.focus({ preventScroll: true });
   }
 
@@ -79,6 +75,21 @@
     if (e.key === "Escape" && overlay.hidden === false) {
       e.preventDefault();
       close();
+      return;
+    }
+    // 简单焦点陷阱：弹窗打开期间 Tab 在面板内循环
+    if (e.key === "Tab" && overlay.hidden === false) {
+      const focusables = panel.querySelectorAll("button, [href], textarea, input, select");
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
   });
 })();

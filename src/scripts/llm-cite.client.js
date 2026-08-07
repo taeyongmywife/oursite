@@ -41,8 +41,6 @@
     overlay.hidden = false;
     overlay.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    const article = document.querySelector("article");
-    if (article) article.inert = true;
     if (activeTrigger) activeTrigger.setAttribute("aria-expanded", "true");
     panel.focus({ preventScroll: true });
   }
@@ -52,8 +50,6 @@
     overlay.hidden = true;
     overlay.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
-    const article = document.querySelector("article");
-    if (article) article.inert = false;
     if (activeTrigger) activeTrigger.focus({ preventScroll: true });
     activeCiteId = 0;
   }
