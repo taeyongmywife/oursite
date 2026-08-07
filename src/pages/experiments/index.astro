@@ -1,11 +1,15 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
-import TagBox from "../../components/TagBox.astro";
-import { getPosts, groupPostsByTagBox } from "../../lib/payload";
+import { getPosts, groupPostsBySeries } from "../../lib/payload";
 
 const experiments = await getPosts("experiment");
-const tagGroups = groupPostsByTagBox(experiments);
+const seriesGroups = groupPostsBySeries(experiments);
+
+function formatDate(iso: string | undefined): string {
+  if (!iso) return "";
+  return iso.split("T")[0].replace(/-/g, ".");
+}
 ---
 
 <Layout title="EXPERIMENTS · IN PROGRESS | BubbleCrisp" description="Experiment Lab - A record of ongoing projects.">
@@ -15,10 +19,25 @@ const tagGroups = groupPostsByTagBox(experiments);
       Ongoing systems and small tests. The lab stays dim, but active.
     </p>
 
-    {tagGroups.length > 0 ? (
-      <div class="tag-group">
-        {tagGroups.map((group) => (
-          <TagBox tag={group.tag} posts={group.posts} basePath="/experiments" />
+    {seriesGroups.length > 0 ? (
+      <div class="series-list">
+        {seriesGroups.map((group) => (
+          <section class="series-group" data-untitled={group.series.id === -1}>
+            <h2 class="series-head">
+              <span class="series-title">{group.series.title}</span>
+              <span class="series-count">{group.posts.length.toString().padStart(2, "0")} 篇</span>
+            </h2>
+            <ul class="series-posts">
+              {group.posts.map((post) => (
+                <li>
+                  <a href={`/experiments/${post.slug}`} class="series-post">
+                    <span class="series-post-title">{post.title}</span>
+                    <span class="series-post-date">{formatDate(post.createdAt)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
       </div>
     ) : (
@@ -36,16 +55,105 @@ const tagGroups = groupPostsByTagBox(experiments);
 .section-intro {
   position: relative;
   z-index: 1;
-  margin: 0 0 var(--space-8) 0;
+  margin: 0 0 var(--space-12) 0;
   color: var(--paper-rust);
 }
 
-.tag-group {
+.series-list {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-12);
+}
+
+.series-group {
+  margin: 0;
+}
+
+.series-group[data-untitled="true"] .series-title {
+  color: var(--text-dim);
+}
+
+.series-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 var(--space-4) 0;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.series-title {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.series-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+
+.series-posts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.series-post {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  text-decoration: none;
+  color: var(--text-muted);
+  border-bottom: 1px dashed var(--border);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.series-post::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.series-post:hover {
+  color: var(--text-primary);
+}
+
+.series-post:hover::before {
+  transform: scaleY(1);
+}
+
+.series-post-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.series-post-date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--rock-granite);
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
 }
 
 .empty {
@@ -54,5 +162,13 @@ const tagGroups = groupPostsByTagBox(experiments);
   color: var(--rock-granite);
   text-align: center;
   padding: var(--space-16) 0;
+}
+
+@media (max-width: 768px) {
+  .series-post {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
 }
 </style>

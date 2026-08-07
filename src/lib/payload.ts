@@ -174,6 +174,91 @@ export function groupPostsByTagBox(posts: PayloadPost[]): TagGroup[] {
   });
 }
 
+export interface SeriesGroup {
+  series: { id: number; title: string; slug: string };
+  posts: Array<{
+    title: string;
+    slug: string;
+    logNumber: number | null;
+    createdAt: string;
+  }>;
+}
+
+/**
+ * 按 Series 对文章分组，用于 /experiments 等按系列归档的页面。
+ * 未归类文章会放到最后的「未归类」分组里，避免丢失。
+ */
+export function groupPostsBySeries(posts: PayloadPost[]): SeriesGroup[] {
+  const grouped: Record<string, SeriesGroup> = {};
+  const UNTITLED_KEY = "__untitled__";
+
+  for (const post of posts) {
+    const s = post.series;
+
+    if (!s) {
+      if (!grouped[UNTITLED_KEY]) {
+        grouped[UNTITLED_KEY] = {
+          series: { id: -1, title: "未归类", slug: "" },
+          posts: [],
+        };
+      }
+      grouped[UNTITLED_KEY].posts.push({
+        title: post.title,
+        slug: post.slug,
+        logNumber: post.logNumber,
+        createdAt: post.createdAt,
+      });
+      continue;
+    }
+
+    const seriesId = typeof s === "number" ? s : s.id;
+    const seriesTitle = typeof s === "number" ? `Series #${s}` : s.title;
+    const seriesSlug = typeof s === "number" ? "" : s.slug;
+    const key = String(seriesId);
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        series: { id: seriesId, title: seriesTitle, slug: seriesSlug },
+        posts: [],
+      };
+    }
+    grouped[key].posts.push({
+      title: post.title,
+      slug: post.slug,
+      logNumber: post.logNumber,
+      createdAt: post.createdAt,
+    });
+  }
+
+  // 组内按 logNumber 升序，无 logNumber 按创建时间倒序
+  for (const group of Object.values(grouped)) {
+    group.posts.sort((a, b) => {
+      if (a.logNumber != null && b.logNumber != null) {
+        return a.logNumber - b.logNumber;
+      }
+      if (a.logNumber != null) return -1;
+      if (b.logNumber != null) return 1;
+      return (
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    });
+  }
+
+  // 系列按最新文章时间倒序，再按标题；未归类永远放最后
+  return Object.values(grouped).sort((a, b) => {
+    if (a.series.id === -1) return 1;
+    if (b.series.id === -1) return -1;
+    const aLatest = Math.max(
+      ...a.posts.map((p) => new Date(p.createdAt).getTime())
+    );
+    const bLatest = Math.max(
+      ...b.posts.map((p) => new Date(p.createdAt).getTime())
+    );
+    if (aLatest !== bLatest) return bLatest - aLatest;
+    return a.series.title.localeCompare(b.series.title);
+  });
+}
+
 // ===========================
 // TagBox（主题盒子，文章主探索入口）
 // ===========================

@@ -25,10 +25,10 @@ const latestFragments = [...fragments].sort(
 
 const currentId = String(fragments.length).padStart(4, "0");
 
-// 最近文章按创建时间倒序，取前 6 条
+// 最近文章按创建时间倒序，首页只展示 3 条，避免过于密集
 const recentPosts = [...posts].sort(
   (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
-).slice(0, 6);
+).slice(0, 3);
 
 // CMS 分类 slug → 前台路由段存在单复数差异
 // (category slug 为单数 experiment/fragment/blog,路由为复数 experiments/fragments/blog)
@@ -186,7 +186,7 @@ const categoryToPath: Record<string, string> = {
 }
 
 .recent {
-  padding: var(--space-12) 0 var(--space-16) 0;
+  padding: var(--space-24) 0 var(--space-24) 0;
 }
 
 .recent-title {
@@ -195,7 +195,7 @@ const categoryToPath: Record<string, string> = {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--paper-bone);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-12);
 }
 
 .recent-list {
@@ -209,7 +209,7 @@ const categoryToPath: Record<string, string> = {
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-4);
-  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  padding: var(--space-6) var(--space-4) var(--space-6) var(--space-6);
   text-decoration: none;
   transition: background var(--duration-fast) var(--ease-out);
 }
@@ -241,7 +241,7 @@ const categoryToPath: Record<string, string> = {
 
 .recent-row-title {
   font-family: var(--font-serif);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   color: var(--text-muted);
   transition: color var(--duration-fast) var(--ease-out);
 }
@@ -289,7 +289,15 @@ const categoryToPath: Record<string, string> = {
   }
 
   .recent {
-    padding: var(--space-8) 0 var(--space-12) 0;
+    padding: var(--space-16) 0 var(--space-16) 0;
+  }
+
+  .recent-row {
+    padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  }
+
+  .recent-row-title {
+    font-size: var(--text-base);
   }
 }
 </style>
