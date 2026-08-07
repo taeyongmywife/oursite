@@ -24,6 +24,8 @@ const rootNode = "root" in content ? content.root : content;
 
 // LLM Review 引用触发点序号（与 extractLLMResponses 顺序一致，从 1 开始）
 let citeSeq = 0;
+// 内联知识链接去重：同一 slug 全篇只高亮首次出现，避免反复打断阅读
+let linkedSlugs = new Set<string>();
 
 function escapeHtml(str: string): string {
   return str
@@ -63,6 +65,9 @@ function applyKnowledgeLinks(text: string, km: Record<string, string>): string {
   return text.replace(regex, (match) => {
     const slug = km[match.toLowerCase()];
     if (!slug) return match;
+    // 同一词条全篇只高亮第一次出现，后续出现保持纯文本，减少视觉干扰
+    if (linkedSlugs.has(slug)) return match;
+    linkedSlugs.add(slug);
     // 输出按钮触发浮层预览（与 KnowledgeReference 复用同一个 payload + script）
     return `<button type="button" class="knowledge-link knowledge-preview-trigger" data-knowledge-slug="${escapeHtml(slug)}" aria-haspopup="dialog" aria-controls="knowledge-overlay-panel" aria-expanded="false">${escapeHtml(match)}</button>`;
   });
@@ -221,7 +226,11 @@ const html = renderBlock(rootNode, knowledgeMap);
 
 <Fragment set:html={html} />
 
-<style>
+{/*
+  正文 HTML 由 set:html 注入，Astro 的 scoped 样式不会带 data-astro-cid 属性，
+  因此这里的样式必须 is:global 才能作用到内联 knowledge-link / llm-cite-trigger 按钮与表格。
+*/}
+<style is:global>
 .knowledge-link {
   appearance: none;
   background: transparent;
@@ -242,6 +251,37 @@ const html = renderBlock(rootNode, knowledgeMap);
 .knowledge-link:focus-visible {
   outline: 2px solid var(--mineral-copper);
   outline-offset: 2px;
+}
+
+/* 模型原文「查看原文」触发按钮：同样用 set:html 注入，需 global 才能去白块 */
+.llm-cite-trigger {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin-left: 0.25em;
+  font: inherit;
+  cursor: pointer;
+  color: var(--mineral-copper);
+  border-bottom: 1px dotted var(--mineral-copper);
+  white-space: nowrap;
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+
+.llm-cite-trigger:hover,
+.llm-cite-trigger[aria-expanded="true"] {
+  border-bottom-color: var(--mineral-moss);
+}
+
+.llm-cite-trigger:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 2px;
+}
+
+.llm-cite-trigger-icon {
+  display: inline-flex;
+  vertical-align: -0.12em;
+  margin-left: 0.2em;
 }
 
 /* ===== Lexical 表格（站内极简风） ===== */
