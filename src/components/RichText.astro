@@ -190,9 +190,13 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
 
     case "llmResponse": {
       // 模型原文不进入正文（SEO 干净）：只渲染触发按钮，正文通过 data-cite-id 关联页面级 JSON payload。
+      // 按钮文字取 CMS 可配置的 viewText，缺省回退「查看原文」。
       citeSeq += 1;
       const id = citeSeq;
-      return `<button type="button" class="llm-cite-trigger" data-cite-id="${id}" aria-haspopup="dialog" aria-controls="llm-cite-panel" aria-expanded="false">查看原文<span class="llm-cite-trigger-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 3.5h8v6H7.5L5 12v-2.5H4v-6z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg></span></button>`;
+      const d = (node as Record<string, unknown>).data as Record<string, unknown> | undefined;
+      const rawView = typeof d?.viewText === "string" ? d.viewText.trim() : "";
+      const viewText = rawView ? rawView : "查看原文";
+      return `<button type="button" class="llm-cite-trigger" data-cite-id="${id}" aria-haspopup="dialog" aria-controls="llm-cite-panel" aria-expanded="false">${escapeHtml(viewText)}<span class="llm-cite-trigger-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 3.5h8v6H7.5L5 12v-2.5H4v-6z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg></span></button>`;
     }
 
     case "code": {

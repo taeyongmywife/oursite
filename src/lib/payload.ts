@@ -729,6 +729,10 @@ export interface LLMResponseData {
   scenario: string;
   testedAt: string;
   body: string;
+  /** 正文「查看原文」触发按钮文字（CMS 可编辑） */
+  viewText: string;
+  /** 弹窗顶部 kicker 文字（CMS 可编辑） */
+  kicker: string;
 }
 
 export interface LLMResponseCite extends LLMResponseData {
@@ -759,6 +763,8 @@ export function extractLLMResponses(content: unknown): LLMResponseCite[] {
       scenario: String(data.scenario ?? ""),
       testedAt: String(data.testedAt ?? ""),
       body: String(data.body ?? ""),
+      viewText: String(data.viewText ?? "查看原文"),
+      kicker: String(data.kicker ?? "MODEL RESPONSE"),
     });
   }
   return out;

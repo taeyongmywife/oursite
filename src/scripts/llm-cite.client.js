@@ -7,6 +7,7 @@
   const overlay = document.querySelector("[data-llm-overlay]");
   const panel = document.querySelector("[data-llm-panel]");
   const meta = document.querySelector("[data-llm-meta]");
+  const kickerEl = document.querySelector("[data-llm-kicker]");
   const bodyEl = document.querySelector("[data-llm-body]");
   const copyBtn = document.querySelector("[data-llm-copy]");
   const live = document.querySelector("[data-llm-live]");
@@ -38,6 +39,7 @@
       cite.testedAt ? `<span>${cite.testedAt}</span>` : "",
     ].join("");
     bodyEl.textContent = cite.body;
+    if (kickerEl) kickerEl.textContent = cite.kicker || "MODEL RESPONSE";
     overlay.hidden = false;
     overlay.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
