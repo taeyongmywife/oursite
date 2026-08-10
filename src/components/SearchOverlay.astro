@@ -251,9 +251,16 @@ const { placeholder = "搜索文章、主题、概念…" } = Astro.props;
     activeIdx = -1;
   }
 
+  // category slug（单数）→ 路由段（复数）；/blog 已废弃删除
+  const CATEGORY_TO_PATH: Record<string, string> = {
+    experiment: "experiments",
+    fragment: "fragments",
+    market: "market",
+  };
+
   function buildHref(item: { slug: string; category: string | null }): string {
-    if (item.category === "blog" || !item.category) return `/blog/${item.slug}`;
-    return `/${item.category}/${item.slug}`;
+    const seg = item.category ? CATEGORY_TO_PATH[item.category] : undefined;
+    return seg ? `/${seg}/${item.slug}` : `/fragments/${item.slug}`;
   }
 
   function renderResults(matches: typeof INDEX) {

@@ -318,6 +318,35 @@ export interface RelatedPost {
   category: string | null; // category slug，便于后续样式/路由区分
 }
 
+/**
+ * 文章详情页路由：category slug（单数）→ 路由段（复数）。
+ * /blog 已废弃删除（无任何入口），详情页统一按分类走
+ * /experiments /fragments /market。
+ */
+const CATEGORY_TO_PATH: Record<string, string> = {
+  experiment: "experiments",
+  fragment: "fragments",
+  market: "market",
+};
+
+export function categorySlugOf(post: { category?: unknown }): string | null {
+  const c = post.category;
+  if (typeof c === "object" && c !== null) {
+    return (c as { slug?: string }).slug ?? null;
+  }
+  if (typeof c === "string") return c;
+  return null;
+}
+
+export function postPath(slug: string, category: string | null | undefined): string {
+  const seg = category ? CATEGORY_TO_PATH[category] : undefined;
+  return seg ? `/${seg}/${slug}` : `/fragments/${slug}`;
+}
+
+export function postPathOf(post: { slug: string; category?: unknown }): string {
+  return postPath(post.slug, categorySlugOf(post));
+}
+
 function tagBoxSlugsOf(post: PayloadPost): string[] {
   const tb = Array.isArray(post.tagBox) ? post.tagBox : [];
   return tb
@@ -362,7 +391,7 @@ export async function getSeriesAdjacent(
  * - 共享 TagBox（主题盒子）数量加权（每个 +2）
  * - 同系列（Series）额外加权（+5）
  * 按得分降序、再按发布时间降序，取前 limit 篇。
- * 链接统一走 /blog/[slug]（所有文章通用路由）。
+ * 链接由调用方通过 postPath() 按分类生成（/experiments /fragments /market）。
  */
 export async function getRelatedPosts(
   current: PayloadPost,

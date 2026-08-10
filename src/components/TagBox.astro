@@ -9,15 +9,18 @@ interface PostInfo {
   title: string;
   slug: string;
   createdAt?: string;
+  category?: unknown;
 }
 
 interface Props {
   tag: TagInfo;
   posts: PostInfo[];
   basePath?: string;
+  /** 自定义每篇文章的链接（优先级高于 basePath），用于按分类生成详情页路由 */
+  hrefFor?: (post: PostInfo) => string;
 }
 
-const { tag, posts, basePath = "/fragments" } = Astro.props;
+const { tag, posts, basePath = "/fragments", hrefFor } = Astro.props;
 ---
 
 <section class:list={["tag-box", posts.length === 0 && "is-empty"]}>
@@ -27,7 +30,7 @@ const { tag, posts, basePath = "/fragments" } = Astro.props;
   </div>
   <div class="tag-box-list">
     {posts.map((post, i) => (
-      <a href={`${basePath}/${post.slug}`} class="tag-post-item">
+      <a href={hrefFor ? hrefFor(post) : `${basePath}/${post.slug}`} class="tag-post-item">
         <div class="tag-post-left">
           <span class="tag-post-index">#{(i + 1).toString().padStart(4, "0")}</span>
           <span class="tag-post-title">{post.title}</span>

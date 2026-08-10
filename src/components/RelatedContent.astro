@@ -1,5 +1,5 @@
 ---
-import { getRelatedPosts, type PayloadPost } from "../lib/payload";
+import { getRelatedPosts, postPath, type PayloadPost } from "../lib/payload";
 
 interface Props {
   post: PayloadPost;
@@ -22,7 +22,7 @@ const hasRelated = related.length > 0;
     <ul class="related-list">
       {related.map((r) => (
         <li class="related-item">
-          <a href={`/blog/${r.slug}`} class="related-link">
+          <a href={postPath(r.slug, r.category)} class="related-link">
             <span class="related-arrow">→</span>
             <span class="related-name">{r.title}</span>
           </a>

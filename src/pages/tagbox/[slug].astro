@@ -2,7 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import TagBox from "../../components/TagBox.astro";
-import { getTagBoxes, getPostsByTagBox } from "../../lib/payload";
+import { getTagBoxes, getPostsByTagBox, postPath, categorySlugOf } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const tagBoxes = await getTagBoxes();
@@ -18,6 +18,7 @@ const postInfos = posts.map((p) => ({
   title: p.title,
   slug: p.slug,
   createdAt: p.createdAt,
+  category: p.category,
 }));
 ---
 
@@ -33,7 +34,7 @@ const postInfos = posts.map((p) => ({
         <TagBox
           tag={{ id: tagBox.id, title: tagBox.title, slug: tagBox.slug }}
           posts={postInfos}
-          basePath="/blog"
+          hrefFor={(p) => postPath(p.slug, categorySlugOf(p))}
         />
       </div>
     ) : (

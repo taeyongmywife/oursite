@@ -45,26 +45,6 @@ const cases = defineCollection({
 		}),
 });
 
-const blog = defineCollection({
-	loader: glob({ base: './src/content/blog', pattern: '**/*.{md,mdx}' }),
-	schema: ({ image }) =>
-		z.object({
-			title: z.string(),
-			description: z.string(),
-			excerpt: z.string().optional(),
-			category: z.enum(['ai-lab', 'commerce-lab', 'creative-space', 'thinking-notes']),
-			subject: z.string().optional(),
-			status: z.string(),
-			pubDate: z.coerce.date(),
-			updatedDate: z.coerce.date().optional(),
-			heroImage: z.optional(image()),
-			readingTime: z.number().optional(),
-			featured: z.boolean().optional().default(false),
-			tags: z.array(z.string()).optional().default([]),
-			knowledgeIndex: z.array(z.string()).optional().default([]),
-		}),
-});
-
 const products = defineCollection({
 	loader: glob({ base: './src/content/products', pattern: '**/*.{md,mdx}' }),
 	schema: ({ image }) =>
@@ -93,4 +73,4 @@ const products = defineCollection({
 		}),
 });
 
-export const collections = { fragments, experiments, cases, blog, products };
+export const collections = { fragments, experiments, cases, products };

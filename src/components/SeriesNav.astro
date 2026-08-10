@@ -1,5 +1,5 @@
 ---
-import { getPosts, getSeriesAdjacent, type PayloadPost } from "../lib/payload";
+import { getPosts, getSeriesAdjacent, postPathOf, type PayloadPost } from "../lib/payload";
 
 interface Props {
   post: PayloadPost;
@@ -40,7 +40,7 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
 
     <div class="series-steps">
       {prevPost ? (
-        <a class="series-step prev" href={`/blog/${prevPost.slug}`} title={prevPost.title}>
+        <a class="series-step prev" href={postPathOf(prevPost)} title={prevPost.title}>
           <span class="step-dir">← 上一篇 · PREV</span>
           <span class="step-title">{prevPost.title}</span>
         </a>
@@ -51,7 +51,7 @@ const logLabel = logNumber != null ? `#${String(logNumber).padStart(3, "0")}` : 
         </span>
       )}
       {nextPost ? (
-        <a class="series-step next" href={`/blog/${nextPost.slug}`} title={nextPost.title}>
+        <a class="series-step next" href={postPathOf(nextPost)} title={nextPost.title}>
           <span class="step-dir">下一篇 · NEXT →</span>
           <span class="step-title">{nextPost.title}</span>
         </a>

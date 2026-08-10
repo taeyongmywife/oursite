@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { getCollection } from 'astro:content';
+import { postPathOf } from '../lib/payload';
 
 const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 let posts = [];
@@ -29,14 +30,6 @@ const currentId = String(fragments.length).padStart(4, "0");
 const recentPosts = [...posts].sort(
   (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
 ).slice(0, 3);
-
-// CMS 分类 slug → 前台路由段存在单复数差异
-// (category slug 为单数 experiment/fragment/blog,路由为复数 experiments/fragments/blog)
-const categoryToPath: Record<string, string> = {
-  experiment: "experiments",
-  fragment: "fragments",
-  blog: "blog",
-};
 ---
 
 <Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
@@ -66,8 +59,7 @@ const categoryToPath: Record<string, string> = {
         const cat = typeof post.category === "object" && post.category !== null
           ? post.category.slug
           : null;
-        const pathSegment = cat ? categoryToPath[cat] ?? cat : null;
-        const href = pathSegment ? `/${pathSegment}/${post.slug}` : `/blog/${post.slug}`;
+        const href = postPathOf(post);
         const date = post.createdAt?.split("T")[0]?.replace(/-/g, ".") ?? "";
         return (
           <a href={href} class="recent-row">
