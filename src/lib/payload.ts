@@ -1,3 +1,5 @@
+import { containsLLMMarker, parseLLMMarkers } from "./llmMarkers";
+
 const payloadUrl = import.meta.env.PUBLIC_PAYLOAD_URL;
 
 /**
@@ -750,7 +752,7 @@ export async function getBetweenEntries(): Promise<BetweenEntry[]> {
   }
 }
 
-/* ===================== LLM Review 引用（llmResponse 节点） ===================== */
+/* ===================== LLM Review 引用（llmResponse 节点 + [[llm:...]] 标记） ===================== */
 
 export interface LLMResponseData {
   modelId: string;
@@ -770,31 +772,74 @@ export interface LLMResponseCite extends LLMResponseData {
 }
 
 /**
- * 从文章正文（Lexical JSON）提取所有 llmResponse 节点，生成页面级引用列表。
- * 渲染层（RichText）按相同顺序输出触发按钮，citeId 一一对应。
+ * 从文章正文提取 LLM 引用列表，生成页面级 payload（渲染层按相同顺序输出触发按钮）。
+ *
+ * 双轨兼容（DFS 先序遍历，顺序 = RichText 渲染顺序）：
+ *  1. 旧轨：Lexical 的 llmResponse 自定义节点（CMS 编辑渲染失败，但已存文章 JSON 仍兼容）
+ *  2. 新轨：纯文本标记 [[llm:模型ID|按钮文字|原文]]（方案A，CMS 零改动，推荐写法）
  */
 export function extractLLMResponses(content: unknown): LLMResponseCite[] {
   const root = (content as { root?: { children?: unknown[] } } | null)?.root;
-  const children = root?.children;
-  if (!Array.isArray(children)) return [];
-
   const out: LLMResponseCite[] = [];
   let seq = 0;
-  for (const child of children) {
-    const node = child as Record<string, unknown> | null;
-    if (!node || node.type !== "llmResponse") continue;
-    const data = (node.data ?? {}) as Partial<LLMResponseData>;
-    seq += 1;
-    out.push({
-      citeId: seq,
-      modelId: String(data.modelId ?? ""),
-      track: String(data.track ?? ""),
-      scenario: String(data.scenario ?? ""),
-      testedAt: String(data.testedAt ?? ""),
-      body: String(data.body ?? ""),
-      viewText: String(data.viewText ?? "查看原文"),
-      kicker: String(data.kicker ?? "MODEL RESPONSE"),
-    });
-  }
+
+  const visit = (node: Record<string, unknown> | null | undefined) => {
+    if (!node || typeof node !== "object") return;
+    const type = node.type as string | undefined;
+
+    if (type === "llmResponse") {
+      const data = (node.data ?? {}) as Partial<LLMResponseData>;
+      seq += 1;
+      out.push({
+        citeId: seq,
+        modelId: String(data.modelId ?? ""),
+        track: String(data.track ?? ""),
+        scenario: String(data.scenario ?? ""),
+        testedAt: String(data.testedAt ?? ""),
+        body: String(data.body ?? ""),
+        viewText: String(data.viewText ?? "查看原文"),
+        kicker: String(data.kicker ?? "MODEL RESPONSE"),
+      });
+    } else if (type === "paragraph") {
+      const text = paragraphPlainText(node);
+      if (containsLLMMarker(text)) {
+        const { markers, endSeq } = parseLLMMarkers(text, seq);
+        for (const m of markers) {
+          out.push({
+            citeId: m.citeId,
+            modelId: m.modelId,
+            track: "",
+            scenario: "",
+            testedAt: "",
+            body: m.body,
+            viewText: m.viewText,
+            kicker: "MODEL RESPONSE",
+          });
+        }
+        seq = endSeq;
+      }
+    }
+
+    const children = node.children;
+    if (Array.isArray(children)) {
+      for (const c of children) visit(c as Record<string, unknown>);
+    }
+  };
+
+  visit(root as Record<string, unknown> | null);
   return out;
+}
+
+/** 提取段落内纯文本：text 节点拼接，linebreak 转 \n（与 RichText 渲染端的拼接规则一致） */
+function paragraphPlainText(node: Record<string, unknown>): string {
+  const children = node.children;
+  if (!Array.isArray(children)) return "";
+  return children
+    .map((c) => {
+      const n = c as Record<string, unknown>;
+      if (n.type === "text") return String(n.text ?? "");
+      if (n.type === "linebreak") return "\n";
+      return "";
+    })
+    .join("");
 }

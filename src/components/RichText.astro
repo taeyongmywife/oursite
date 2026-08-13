@@ -1,4 +1,6 @@
 ---
+import { parseLLMMarkers, containsLLMMarker } from "../lib/llmMarkers";
+
 export interface LexicalNode {
   type: string;
   format?: number;
@@ -73,6 +75,47 @@ function applyKnowledgeLinks(text: string, km: Record<string, string>): string {
   });
 }
 
+/**
+ * 方案A：[[llm:...]] 纯文本标记。
+ * 提取段落内纯文本（text 拼接、linebreak→\n），与 payload.ts 的 extractLLMResponses
+ * 拼接规则一致，保证渲染顺序 = 提取顺序（citeId 一一对应）。
+ */
+function paragraphPlainText(node: LexicalNode): string {
+  return (node.children ?? [])
+    .map((c) => {
+      if (c.type === "text") return c.text ?? "";
+      if (c.type === "linebreak") return "\n";
+      return "";
+    })
+    .join("");
+}
+
+/** 与 llmResponse 节点相同的触发按钮 HTML（含图标），viewText 由标记第 2 段定制 */
+function llmTriggerHtml(id: number, viewText: string): string {
+  return `<button type="button" class="llm-cite-trigger" data-cite-id="${id}" aria-haspopup="dialog" aria-controls="llm-cite-panel" aria-expanded="false">${escapeHtml(viewText)}<span class="llm-cite-trigger-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 3.5h8v6H7.5L5 12v-2.5H4v-6z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg></span></button>`;
+}
+
+/**
+ * 渲染含 [[llm:...]] 标记的段落：
+ * 整段按纯文本拼接（忽略段内格式，标记引用段落本就无格式），
+ * 标记替换为触发按钮，标记外文本 escapeHtml 原样输出。
+ * 知识链接（applyKnowledgeLinks）在标记段落内不应用——避免与按钮穿插冲突。
+ */
+function renderParagraphWithMarkers(text: string): string {
+  const { markers } = parseLLMMarkers(text);
+  if (markers.length === 0) return "";
+  let out = "";
+  let last = 0;
+  for (const m of markers) {
+    citeSeq += 1;
+    out += escapeHtml(text.slice(last, m.index));
+    out += llmTriggerHtml(m.citeId, m.viewText);
+    last = m.index + m.length;
+  }
+  out += escapeHtml(text.slice(last));
+  return `<p>${out}</p>`;
+}
+
 function renderInline(node: LexicalNode, km: Record<string, string> = {}): string {
   if (node.type === "linebreak") return "<br>";
 
@@ -128,6 +171,11 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
     }
 
     case "paragraph": {
+      const plain = paragraphPlainText(node);
+      // 方案A：[[llm:...]] 标记段落 → 替换为触发按钮（整段纯文本渲染）
+      if (containsLLMMarker(plain)) {
+        return renderParagraphWithMarkers(plain);
+      }
       const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return inner ? `<p>${inner}</p>` : "";
     }

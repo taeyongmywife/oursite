@@ -33,8 +33,8 @@
     if (!cite) return;
     activeCiteId = id;
     meta.innerHTML = [
-      `<span class="llm-cite-model">${cite.modelId}</span>`,
-      `<span class="llm-cite-track">${cite.track}</span>`,
+      cite.modelId ? `<span class="llm-cite-model">${cite.modelId}</span>` : "",
+      cite.track ? `<span class="llm-cite-track">${cite.track}</span>` : "",
       cite.scenario ? `<span>${cite.scenario}</span>` : "",
       cite.testedAt ? `<span>${cite.testedAt}</span>` : "",
     ].join("");
