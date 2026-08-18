@@ -163,8 +163,13 @@ function renderInline(node: LexicalNode, km: Record<string, string> = {}): strin
     if (refId) {
       return `<button type="button" class="inline-ref-trigger" data-inline-ref-id="${escapeHtml(refId)}" aria-haspopup="dialog" aria-controls="inline-ref-panel" aria-expanded="false">${inner}</button>`;
     }
-    const href = escapeHtml(fields.url ?? node.url ?? "#");
-    return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+    // 普通链接：仅当存在有效 url 时才输出 <a>；
+    // 否则（如孤立的 internal link 脏数据，无 url 也无 refId）降级为纯文本，避免 <a href="#"> 死链。
+    const href = typeof fields.url === "string" && fields.url ? fields.url : "";
+    if (href) {
+      return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
+    }
+    return inner;
   }
 
   return "";
