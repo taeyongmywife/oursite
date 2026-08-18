@@ -155,8 +155,15 @@ function renderInline(node: LexicalNode, km: Record<string, string> = {}): strin
   }
 
   if (node.type === "link") {
-    const href = escapeHtml(node.url ?? "#");
+    // Lexical 3.86 的 url 在 fields 上（node.url 为历史遗留空值，已修正）。
+    const fields = (node as Record<string, any>).fields ?? {};
+    const refId = typeof fields.refId === "string" ? fields.refId : "";
     const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
+    // Inline Reference 锚点：refId 非空 → 渲染成展开触发按钮（不产生跳转）。
+    if (refId) {
+      return `<button type="button" class="inline-ref-trigger" data-inline-ref-id="${escapeHtml(refId)}" aria-haspopup="dialog" aria-controls="inline-ref-panel" aria-expanded="false">${inner}</button>`;
+    }
+    const href = escapeHtml(fields.url ?? node.url ?? "#");
     return `<a href="${href}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
   }
 

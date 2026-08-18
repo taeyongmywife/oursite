@@ -7,6 +7,7 @@ import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
+import InlineReference from "../../components/InlineReference.astro";
 import LLMResponseCite from "../../components/LLMResponseCite.astro";
 import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses } from "../../lib/payload";
 
@@ -68,6 +69,8 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
     )}
 
     <KnowledgeReference entries={matchedKnowledge} />
+
+    <InlineReference references={experiment.references ?? []} />
 
     <TagBoxChips post={experiment} />
 

@@ -1,0 +1,137 @@
+---
+import RichText from "./RichText.astro";
+import type { InlineReferenceRaw } from "../lib/payload";
+
+interface Props {
+  references: InlineReferenceRaw[];
+}
+
+const { references } = Astro.props;
+
+// 只保留有 refId 的合法项；引用内容在构建期用 RichText 渲染后塞进 <template>，
+// 点击时克隆进浮层（复用现有 RichText renderer，不重复造富文本渲染器）。
+const safeRefs = (references ?? []).filter(
+  (r): r is InlineReferenceRaw & { refId: string } =>
+    !!r && typeof r.refId === "string" && r.refId.length > 0
+);
+---
+
+{
+  safeRefs.length > 0 && (
+    <>
+      {/* 浮层壳：复用 Overlay.astro 的 .site-overlay* 全局样式，
+          但用 data-inline-ref-* 选择器，避免与 Knowledge 浮层（data-site-overlay）在同一页冲突。 */}
+      <div class="site-overlay" data-inline-ref-overlay hidden aria-hidden="true">
+        <div class="site-overlay-scrim" data-inline-ref-scrim></div>
+        <div
+          class="site-overlay-panel"
+          id="inline-ref-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="inline-ref-title"
+          data-inline-ref-panel
+          tabindex="-1"
+        >
+          <div class="site-overlay-head">
+            <span class="site-overlay-kicker" id="inline-ref-title" data-inline-ref-kicker>
+              REFERENCE
+            </span>
+            <button
+              type="button"
+              class="site-overlay-close"
+              data-inline-ref-close
+              aria-label="关闭 / Close"
+            >
+              ×
+            </button>
+          </div>
+          <div class="inline-ref-body" data-inline-ref-body></div>
+        </div>
+      </div>
+
+      {/* 每个 Reference 的富文本内容，构建期渲染后塞进 <template>，点击克隆进浮层。
+          不传 knowledgeMap：引用内容不内联知识链接，避免触发点内部再套一层按钮。 */}
+      {safeRefs.map((ref) => (
+        <template
+          data-inline-ref-template={ref.refId}
+          data-inline-ref-label={ref.label ?? ""}
+          data-inline-ref-type={ref.type ?? ""}
+        >
+          <RichText content={ref.content} />
+        </template>
+      ))}
+
+      <script>
+        import "../scripts/inline-ref.client.js";
+      </script>
+    </>
+  )
+}
+
+<style is:global>
+/* 正文触发点：点按展开参考内容（复用 knowledge-link 的视觉语言，但用独立 class 避免样式耦合） */
+.inline-ref-trigger {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0 0.1em;
+  font: inherit;
+  cursor: pointer;
+  color: var(--mineral-copper);
+  border-bottom: 1px dashed var(--mineral-moss);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+}
+
+.inline-ref-trigger:hover,
+.inline-ref-trigger[aria-expanded="true"] {
+  border-bottom-color: var(--mineral-copper);
+  color: var(--paper-rust);
+}
+
+.inline-ref-trigger:focus-visible {
+  outline: 2px solid var(--mineral-copper);
+  outline-offset: 2px;
+}
+
+/* 浮层内容区（克隆自 <template>）沿用站内正文排版 */
+.inline-ref-body {
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 1.75;
+  color: var(--paper-bone);
+}
+
+.inline-ref-body p {
+  margin: 0 0 var(--space-4) 0;
+}
+
+.inline-ref-body h2,
+.inline-ref-body h3 {
+  margin: var(--space-6) 0 var(--space-3) 0;
+  font-weight: 400;
+}
+
+.inline-ref-body ul,
+.inline-ref-body ol {
+  margin: 0 0 var(--space-4) 0;
+  padding-left: var(--space-6);
+}
+
+.inline-ref-body a {
+  color: var(--mineral-copper);
+}
+
+.inline-ref-body pre {
+  background: var(--bg-shelf);
+  padding: var(--space-3);
+  overflow-x: auto;
+}
+
+.inline-ref-body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+</style>

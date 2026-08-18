@@ -8,6 +8,7 @@ import SeriesNav from "../../components/SeriesNav.astro";
 import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
+import InlineReference from "../../components/InlineReference.astro";
 import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent } from "../../lib/payload";
 import quartz from "../../assets/mineral/01-quartz-cluster-dark.jpg";
 
@@ -60,6 +61,8 @@ const seoDesc = fragment.seoDescription ?? fragment.excerpt ?? fragment.title;
     </div>
 
     <KnowledgeReference entries={matchedKnowledge} />
+
+    <InlineReference references={fragment.references ?? []} />
 
     <TagBoxChips post={fragment} />
 

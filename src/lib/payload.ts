@@ -35,6 +35,16 @@ interface PayloadPost {
   series: number | { id: number; title: string; slug: string } | null;
   logNumber: number | null;
   cover: unknown;
+  /** Inline References（本文独立的参考材料，正文经 Link Anchor 关联） */
+  references?: InlineReferenceRaw[];
+}
+
+/** CMS Post.references[] 原始结构（构建期原样透传，前端只取 refId/label/type/content） */
+export interface InlineReferenceRaw {
+  refId?: string | null;
+  label?: string | null;
+  type?: string | null;
+  content?: unknown;
 }
 
 interface PayloadCategory {
