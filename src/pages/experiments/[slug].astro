@@ -8,8 +8,7 @@ import TagBoxChips from "../../components/TagBoxChips.astro";
 import RelatedContent from "../../components/RelatedContent.astro";
 import KnowledgeReference from "../../components/KnowledgeReference.astro";
 import InlineReference from "../../components/InlineReference.astro";
-import LLMResponseCite from "../../components/LLMResponseCite.astro";
-import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent, extractLLMResponses } from "../../lib/payload";
+import { getPosts, getPostBySlug, getKnowledgeList, buildKnowledgeMap, getMatchedKnowledge, getSeriesAdjacent } from "../../lib/payload";
 
 export async function getStaticPaths() {
   const experiments = await getPosts("experiment");
@@ -44,9 +43,6 @@ const seriesAdjacentSlugs = [prevSlug, nextSlug].filter(
   (s): s is string => Boolean(s)
 );
 
-// LLM Review「查看原文」引用（llmResponse 节点 → 页面级 JSON payload）
-const llmCites = extractLLMResponses(experiment.content);
-
 const seoTitle = experiment.seoTitle ?? experiment.title;
 const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.title;
 ---
@@ -77,8 +73,6 @@ const seoDesc = experiment.seoDescription ?? experiment.excerpt ?? experiment.ti
     <div class="experiment-content">
       <RichText content={experiment.content} knowledgeMap={knowledgeMap} />
     </div>
-
-    <LLMResponseCite cites={llmCites} />
 
     <SeriesNav post={experiment} />
 

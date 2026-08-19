@@ -1,6 +1,4 @@
 ---
-import { parseLLMMarkers, containsLLMMarker } from "../lib/llmMarkers";
-
 export interface LexicalNode {
   type: string;
   format?: number;
@@ -24,8 +22,6 @@ interface Props {
 const { content, knowledgeMap = {} } = Astro.props;
 const rootNode = "root" in content ? content.root : content;
 
-// LLM Review 引用触发点序号（与 extractLLMResponses 顺序一致，从 1 开始）
-let citeSeq = 0;
 // 内联知识链接去重：同一 slug 全篇只高亮首次出现，避免反复打断阅读
 let linkedSlugs = new Set<string>();
 
@@ -73,47 +69,6 @@ function applyKnowledgeLinks(text: string, km: Record<string, string>): string {
     // 输出按钮触发浮层预览（与 KnowledgeReference 复用同一个 payload + script）
     return `<button type="button" class="knowledge-link knowledge-preview-trigger" data-knowledge-slug="${escapeHtml(slug)}" aria-haspopup="dialog" aria-controls="knowledge-overlay-panel" aria-expanded="false">${escapeHtml(match)}</button>`;
   });
-}
-
-/**
- * 方案A：[[llm:...]] 纯文本标记。
- * 提取段落内纯文本（text 拼接、linebreak→\n），与 payload.ts 的 extractLLMResponses
- * 拼接规则一致，保证渲染顺序 = 提取顺序（citeId 一一对应）。
- */
-function paragraphPlainText(node: LexicalNode): string {
-  return (node.children ?? [])
-    .map((c) => {
-      if (c.type === "text") return c.text ?? "";
-      if (c.type === "linebreak") return "\n";
-      return "";
-    })
-    .join("");
-}
-
-/** 与 llmResponse 节点相同的触发按钮 HTML（含图标），viewText 由标记第 2 段定制 */
-function llmTriggerHtml(id: number, viewText: string): string {
-  return `<button type="button" class="llm-cite-trigger" data-cite-id="${id}" aria-haspopup="dialog" aria-controls="llm-cite-panel" aria-expanded="false">${escapeHtml(viewText)}<span class="llm-cite-trigger-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 3.5h8v6H7.5L5 12v-2.5H4v-6z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg></span></button>`;
-}
-
-/**
- * 渲染含 [[llm:...]] 标记的段落：
- * 整段按纯文本拼接（忽略段内格式，标记引用段落本就无格式），
- * 标记替换为触发按钮，标记外文本 escapeHtml 原样输出。
- * 知识链接（applyKnowledgeLinks）在标记段落内不应用——避免与按钮穿插冲突。
- */
-function renderParagraphWithMarkers(text: string): string {
-  const { markers } = parseLLMMarkers(text);
-  if (markers.length === 0) return "";
-  let out = "";
-  let last = 0;
-  for (const m of markers) {
-    citeSeq += 1;
-    out += escapeHtml(text.slice(last, m.index));
-    out += llmTriggerHtml(m.citeId, m.viewText);
-    last = m.index + m.length;
-  }
-  out += escapeHtml(text.slice(last));
-  return `<p>${out}</p>`;
 }
 
 function renderInline(node: LexicalNode, km: Record<string, string> = {}): string {
@@ -183,11 +138,6 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
     }
 
     case "paragraph": {
-      const plain = paragraphPlainText(node);
-      // 方案A：[[llm:...]] 标记段落 → 替换为触发按钮（整段纯文本渲染）
-      if (containsLLMMarker(plain)) {
-        return renderParagraphWithMarkers(plain);
-      }
       const inner = (node.children ?? []).map((c) => renderInline(c, km)).join("");
       return inner ? `<p>${inner}</p>` : "";
     }
@@ -248,17 +198,6 @@ function renderBlock(node: LexicalNode, km: Record<string, string> = {}): string
       return `<${tag}${colSpan}${rowSpan}>${inner || "&nbsp;"}</${tag}>`;
     }
 
-    case "llmResponse": {
-      // 模型原文不进入正文（SEO 干净）：只渲染触发按钮，正文通过 data-cite-id 关联页面级 JSON payload。
-      // 按钮文字取 CMS 可配置的 viewText，缺省回退「查看原文」。
-      citeSeq += 1;
-      const id = citeSeq;
-      const d = (node as Record<string, unknown>).data as Record<string, unknown> | undefined;
-      const rawView = typeof d?.viewText === "string" ? d.viewText.trim() : "";
-      const viewText = rawView ? rawView : "查看原文";
-      return `<button type="button" class="llm-cite-trigger" data-cite-id="${id}" aria-haspopup="dialog" aria-controls="llm-cite-panel" aria-expanded="false">${escapeHtml(viewText)}<span class="llm-cite-trigger-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 3.5h8v6H7.5L5 12v-2.5H4v-6z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 8h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg></span></button>`;
-    }
-
     case "code": {
       const code = (node.children ?? []).map((c) => c.text ?? "").join("");
       const lang = (node as Record<string, string>).language ?? "";
@@ -292,7 +231,7 @@ const html = renderBlock(rootNode, knowledgeMap);
 
 {/*
   正文 HTML 由 set:html 注入，Astro 的 scoped 样式不会带 data-astro-cid 属性，
-  因此这里的样式必须 is:global 才能作用到内联 knowledge-link / llm-cite-trigger 按钮与表格。
+  因此这里的样式必须 is:global 才能作用到内联 knowledge-link / inline-ref-trigger 按钮与表格。
 */}
 <style is:global>
 .knowledge-link {
@@ -315,37 +254,6 @@ const html = renderBlock(rootNode, knowledgeMap);
 .knowledge-link:focus-visible {
   outline: 2px solid var(--mineral-copper);
   outline-offset: 2px;
-}
-
-/* 模型原文「查看原文」触发按钮：同样用 set:html 注入，需 global 才能去白块 */
-.llm-cite-trigger {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  margin-left: 0.25em;
-  font: inherit;
-  cursor: pointer;
-  color: var(--mineral-copper);
-  border-bottom: 1px dotted var(--mineral-copper);
-  white-space: nowrap;
-  transition: border-color var(--duration-base) var(--ease-out);
-}
-
-.llm-cite-trigger:hover,
-.llm-cite-trigger[aria-expanded="true"] {
-  border-bottom-color: var(--mineral-moss);
-}
-
-.llm-cite-trigger:focus-visible {
-  outline: 2px solid var(--mineral-copper);
-  outline-offset: 2px;
-}
-
-.llm-cite-trigger-icon {
-  display: inline-flex;
-  vertical-align: -0.12em;
-  margin-left: 0.2em;
 }
 
 /* ===== Lexical 表格（站内极简风） ===== */
